@@ -4,7 +4,7 @@ import {VAceEditor} from 'vue3-ace-editor';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
-import { generateIdentityMat4, getType } from './mattools';
+import {generateIdentityMat4, getType} from './mattools';
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
@@ -33,14 +33,14 @@ export default {
         hasVertexNormal: false,
         materials: [],
         vertex_buffer: [],
-        modelMat: [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]
+        modelMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
       },
       camera: {
         type: CameraType.PERSPECTIVE_LOOKING_AT,
-        viewMat: [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
-        projectionMat: [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]
+        viewMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        projectionMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
       },
-
+      uniformActiveNames: []
     };
   },
   components: {
@@ -67,16 +67,42 @@ export default {
         let uniColor = gl.getUniformLocation(this.shaderProgram, "objectColor");
         let uniShininess = gl.getUniformLocation(this.shaderProgram, "shininess");
 
-        gl.uniformMatrix4fv(uniModelMat, false, [1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,]);
-        gl.uniformMatrix4fv(uniViewMat, false, [0.57735, -0.57735, 0.57735, 0.,
+        let xRotMat = gl.getUniformLocation(this.shaderProgram, "xRotMatrix");
+        let yRotMat = gl.getUniformLocation(this.shaderProgram, "yRotMatrix");
+        let zRotMat = gl.getUniformLocation(this.shaderProgram, "zRotMatrix");
+
+        let ang = Date.now() % 4000 / 2000 * Math.PI
+        gl.uniformMatrix4fv(xRotMat, false, [
+          Math.cos(ang), Math.sin(ang), 0., 0.,
+          -Math.sin(ang), Math.cos(ang), 0., 0.,
+          0., 0., 1., 0.,
+          0., 0., 0., 1.,]);
+        gl.uniformMatrix4fv(yRotMat, false, [
+          Math.cos(ang), 0., -Math.sin(ang), 0.,
+          0., 1., 0., 0.,
+          Math.sin(ang), 0., Math.cos(ang), 0.,
+          0., 0., 0., 1.,]);
+        gl.uniformMatrix4fv(zRotMat, false, [
+          1., 0., 0., 0.,
+          0., Math.cos(ang), Math.sin(ang), 0.,
+          0., -Math.sin(ang), Math.cos(ang), 0.,
+          0., 0., 0., 1.,]);
+        gl.uniformMatrix4fv(uniModelMat, false, [
+          1., 0., 0., 0.,
+          0., 1., 0., 0.,
+          0., 0., 1., 0.,
+          0., 0., 0., 1.]);
+        gl.uniformMatrix4fv(uniViewMat, false, [
+          0.57735, -0.57735, 0.57735, 0.,
           0.40825, 0.40825, 0.81650, 0.,
           -0.70711, -0.70711, 0., 0.,
           0., 0., -9.19239, 1.,]
         );
-        gl.uniformMatrix4fv(uniProjectionMat, false, [1.1918, 0., 0., 0.,
-          0., 1.9696, 0., 0.,
-          0., 0., -1.0025, -1.,
-          0., 0., -1.0020, 0.,]
+        gl.uniformMatrix4fv(uniProjectionMat, false, [
+          2.0920502092050206, 0., 0., 0.,
+          0., 3.7323943661971835, 0., 0.,
+          0., 0., -1.002002002002002, -1.,
+          0., 0., -0.20020020020020018, 0.,]
         );
         gl.uniform3f(uniLightPosition, 0., 8., 0.);
         gl.uniform3f(uniAmbient, 0.2, 0.2, 0.2);
@@ -135,21 +161,22 @@ export default {
             that.model.materials.push(material);
           });
         }
-        /*that.model.vertex_buffer = [0., 0., 1.414,   0., 0., 1.,   0., 0.,
+        /*that.model.vertex_buffer = [
           1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,
+          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
+          0., 0., 1.414,   0., 0., 1.,   0., 0.,
+
+          0., 0., 1.414,   0., 0., 1.,   0., 0.,
+          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
           -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
 
           0., 0., 1.414,   0., 0., 1.,   0., 0.,
-          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
           -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-
-          0., 0., 1.414,   0., 0., 1.,   0., 0.,
           1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,
+
           -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-
-          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,
           -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
-          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,];*/
+          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,];*/
         resultJson.meshes[0].faces.forEach(face => {
           face.forEach(vi => {
             that.model.vertex_buffer.push(resultJson.meshes[0].vertices[vi * 3]);
@@ -178,7 +205,7 @@ export default {
       gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.model.vertex_buffer), gl.STATIC_DRAW);
 
-      const vertexSize = (3 + (this.model.hasVertexNormal ? 3 : 0) + (this.model.hasTextureCoordinate ? 2 : 0)) * 8;
+      const vertexSize = (3 + (this.model.hasVertexNormal ? 3 : 0) + (this.model.hasTextureCoordinate ? 2 : 0)) * 4;
       const positionOffset = 0;
       const normalOffset = 12;
       const texOffset = normalOffset + (this.model.hasVertexNormal ? 12 : 0);
@@ -224,7 +251,7 @@ export default {
       gl.attachShader(this.shaderProgram, vertShader);
       gl.attachShader(this.shaderProgram, fragShader);
       gl.linkProgram(this.shaderProgram);
-      if ( !gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS) ) {
+      if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
         const log = gl.getProgramInfoLog(this.shaderProgram);
         // todo
         console.error(log);
@@ -263,6 +290,7 @@ export default {
     const canvas = this.$refs.canvas;
     this.gl = canvas.getContext('webgl');
     this.gl.enable(this.gl.DEPTH_TEST);
+    this.gl.enable(this.gl.CULL_FACE);
     requestAnimationFrame(this.redraw);
   }
 };
@@ -275,12 +303,20 @@ export default {
     </el-header>
 
     <el-container class="swl-content">
+      <el-aside class="swl-tools-bar">
+
+      </el-aside>
+
       <el-aside class="swl-aside">
         <el-header ref="canvasContainer" class="swl-canvas-container">
           <canvas ref="canvas" class="swl-canvas"/>
         </el-header>
         <el-main class="swl-attributes-container">
-
+          <el-collapse v-model="uniformActiveNames">
+            <swl-gl-context collapseName="1"/>
+            <swl-model-attribute collapseName="2"/>
+            <swl-camera-uniform collapseName="3"/>
+          </el-collapse>
         </el-main>
       </el-aside>
       <el-aside class="swl-main">
@@ -307,9 +343,16 @@ export default {
 
 .swl-header-bar {
   width: 100%;
-  height: 20px;
+  height: 40px;
   overflow: hidden;
   background-color: darkblue;
+}
+
+.swl-tools-bar {
+  width: 4vw;
+  height: 100%;
+  overflow: hidden;
+  background-color: blue;
 }
 
 .swl-content {
@@ -320,11 +363,13 @@ export default {
 .swl-aside {
   width: 40vw;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .swl-main {
-  width: 60vw;
+  width: 56vw;
   height: 100%;
   overflow: hidden;
   border-left: 1px solid #ccc;
@@ -338,7 +383,7 @@ export default {
 }
 
 .swl-attributes-container {
-  flex-grow: 1;
+  flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
 }
