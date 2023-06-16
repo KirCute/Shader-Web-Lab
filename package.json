@@ -10,6 +10,7 @@
   "dependencies": {
     "ace-builds": "^1.22.0",
     "element-plus": "^2.3.5",
+    "mathjs": "^11.8.1",
     "vue": "^3.3.2",
     "vue3-ace-editor": "^2.2.2"
   },

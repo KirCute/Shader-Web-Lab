@@ -4,7 +4,7 @@ import {VAceEditor} from 'vue3-ace-editor';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
-import {generateIdentityMat4, getType} from './mattools';
+import {generateIdentityMat4, getType} from './utils';
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
@@ -36,6 +36,8 @@ export default {
         modelMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
       },
       camera: {
+        //canvasWidth: 0,
+        //canvasHeight: 0,
         type: CameraType.PERSPECTIVE_LOOKING_AT,
         viewMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
         projectionMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
@@ -53,6 +55,9 @@ export default {
         const parentElement = canvas.parentElement;
         canvas.width = parentElement.clientWidth;
         canvas.height = parentElement.clientHeight;
+        //const devicePixelRatio = window.devicePixelRatio || 1;
+        //this.camera.canvasWidth = Math.floor(parentElement.clientWidth * devicePixelRatio)
+        //this.camera.canvasHeight = Math.floor(parentElement.clientHeight * devicePixelRatio)
         const gl = this.gl;
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
