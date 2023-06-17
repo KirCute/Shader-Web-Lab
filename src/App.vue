@@ -1,3 +1,7 @@
+<script setup>
+import {Plus} from '@element-plus/icons-vue'
+</script>
+
 <script>
 import ace from 'ace-builds'
 import {VAceEditor} from 'vue3-ace-editor';
@@ -317,11 +321,23 @@ export default {
           <canvas ref="canvas" class="swl-canvas"/>
         </el-header>
         <el-main class="swl-attributes-container">
-          <el-collapse v-model="uniformActiveNames">
-            <swl-gl-context collapseName="1"/>
-            <swl-model-attribute collapseName="2"/>
-            <swl-camera-uniform collapseName="3"/>
-          </el-collapse>
+          <el-scrollbar style="flex-grow: 1;">
+          <swl-gl-context class="swl-attributes"/>
+          <swl-model-attribute class="swl-attributes"/>
+          <swl-camera-uniform class="swl-attributes"/>
+          <el-popover placement="right" :width="400" trigger="click">
+            <template #reference>
+              <el-button class="swl-attributes" circle :icon="Plus"/>
+            </template>
+            <el-button>Float</el-button>
+            <el-button>Vec2</el-button>
+            <el-button>Vec3</el-button>
+            <el-button>Vec4</el-button>
+            <el-button>Mat2</el-button>
+            <el-button>Mat3</el-button>
+            <el-button>Mat4</el-button>
+          </el-popover>
+          </el-scrollbar>
         </el-main>
       </el-aside>
       <el-aside class="swl-main">
@@ -391,6 +407,11 @@ export default {
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
+  padding: 1px 0;
+}
+
+.swl-attributes {
+  margin: 10px var(--el-main-padding);
 }
 
 .swl-vert-container {

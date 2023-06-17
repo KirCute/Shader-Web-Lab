@@ -1,0 +1,35 @@
+<template>
+  <el-card>
+    <template v-if="expanded" #header>
+      <div class="card-header">
+        <span>{{ title }}</span>
+        <el-button class="button" text @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-button>
+      </div>
+    </template>
+    <div v-if="!expanded" class="card-header">
+      <span>{{ title }}</span>
+      <el-button class="button" text @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-button>
+    </div>
+    <slot v-if="expanded"/>
+  </el-card>
+</template>
+
+<script>
+export default {
+  name: "CardHeader",
+  props: ['title'],
+  data() {
+    return {
+      expanded: false
+    };
+  }
+}
+</script>
+
+<style scoped>
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>

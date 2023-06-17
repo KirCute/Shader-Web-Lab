@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
     "ace-builds": "^1.22.0",
     "element-plus": "^2.3.5",
     "mathjs": "^11.8.1",
