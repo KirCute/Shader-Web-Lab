@@ -1,6 +1,58 @@
-<script setup>
-import {Plus} from '@element-plus/icons-vue'
-</script>
+<template>
+  <el-container class="swl-all">
+    <el-header class="swl-header-bar">
+      Shader Web Lab
+    </el-header>
+
+    <el-container class="swl-content">
+      <el-aside class="swl-tools-bar">
+
+      </el-aside>
+
+      <el-aside class="swl-aside">
+        <el-header ref="canvasContainer" class="swl-canvas-container">
+          <canvas ref="canvas" class="swl-canvas"/>
+        </el-header>
+        <el-main class="swl-attributes-container">
+          <el-scrollbar style="flex-grow: 1;">
+            <swl-gl-context ref="glContext" class="swl-attributes"/>
+            <swl-model-attribute ref="attributeModel" :gl="gl" :shaderProgram="shaderProgram" class="swl-attributes"/>
+            <swl-camera-uniform ref="uniformCamera" class="swl-attributes"/>
+            <div id="custom-uniform-root"/>
+            <el-popover placement="right" :width="390" trigger="click">
+              <template #reference>
+                <el-button class="swl-attributes" circle>
+                  <el-icon class="el-icon"> <Plus/> </el-icon>
+                </el-button>
+              </template>
+              <el-col>
+                <el-row style="margin-bottom: 10px;">
+                  <el-button @click="createNewUniform('float')">Float</el-button>
+                  <el-button @click="createNewUniform('vec2')">Vec2</el-button>
+                  <el-button @click="createNewUniform('vec3')">Vec3</el-button>
+                  <el-button @click="createNewUniform('vec4')">Vec4</el-button>
+                  <el-button @click="createNewUniform('mat2')">Mat2</el-button>
+                </el-row>
+                <el-row>
+                  <el-button @click="createNewUniform('mat3')">Mat3</el-button>
+                  <el-button @click="createNewUniform('mat4')">Mat4</el-button>
+                </el-row>
+              </el-col>
+            </el-popover>
+          </el-scrollbar>
+        </el-main>
+      </el-aside>
+      <el-aside class="swl-main">
+        <el-header class="swl-vert-container">
+          <v-ace-editor v-model:value="vertShader" lang="glsl" theme="github" class="swl-vert"/>
+        </el-header>
+        <el-footer class="swl-frag-container">
+          <v-ace-editor v-model:value="fragShader" lang="glsl" theme="github" class="swl-frag"/>
+        </el-footer>
+      </el-aside>
+    </el-container>
+  </el-container>
+</template>
 
 <script>
 import ace from 'ace-builds'
@@ -8,17 +60,18 @@ import {VAceEditor} from 'vue3-ace-editor';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
-import {generateIdentityMat4, getType} from './utils';
+import {createApp} from "vue";
+import CustomFloatUniformCard from "./components/CustomFloatUniformCard.vue";
+import CustomVec2UniformCard from "./components/CustomVec2UniformCard.vue";
+import CustomVec3UniformCard from "./components/CustomVec3UniformCard.vue";
+import CustomVec4UniformCard from "./components/CustomVec4UniformCard.vue";
+import CustomMat2UniformCard from "./components/CustomMat2UniformCard.vue";
+import CustomMat3UniformCard from "./components/CustomMat3UniformCard.vue";
+import CustomMat4UniformCard from "./components/CustomMat4UniformCard.vue";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
 ace.config.setModuleUrl('ace/theme/github', themeGithubUrl);
-
-const CameraType = {
-  ORTHOGONAL: 0,
-  PERSPECTIVE: 1,
-  PERSPECTIVE_LOOKING_AT: 2,
-}
 
 export default {
   data() {
@@ -27,26 +80,8 @@ export default {
       vertShader: '',
       fragShader: '',
       shaderProgram: undefined,
-      attributeMapping: {
-        position: 'aPosition',
-        normal: 'aNormal',
-        texCoord: 'aTexCoord'
-      },
-      model: {
-        hasTextureCoordinate: false,
-        hasVertexNormal: false,
-        materials: [],
-        vertex_buffer: [],
-        modelMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
-      },
-      camera: {
-        //canvasWidth: 0,
-        //canvasHeight: 0,
-        type: CameraType.PERSPECTIVE_LOOKING_AT,
-        viewMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-        projectionMat: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
-      },
-      uniformActiveNames: []
+      customUniforms: [],
+      nextCustomUniformId: 0
     };
   },
   components: {
@@ -59,16 +94,13 @@ export default {
         const parentElement = canvas.parentElement;
         canvas.width = parentElement.clientWidth;
         canvas.height = parentElement.clientHeight;
-        //const devicePixelRatio = window.devicePixelRatio || 1;
-        //this.camera.canvasWidth = Math.floor(parentElement.clientWidth * devicePixelRatio)
-        //this.camera.canvasHeight = Math.floor(parentElement.clientHeight * devicePixelRatio)
         const gl = this.gl;
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
+        this.$refs.uniformCamera.bindUniform(gl, this.shaderProgram);
+        this.$refs.attributeModel.bindUniform(gl, this.shaderProgram);
+
         // debug
-        let uniModelMat = gl.getUniformLocation(this.shaderProgram, "uModelMatrix");
-        let uniViewMat = gl.getUniformLocation(this.shaderProgram, "uViewMatrix");
-        let uniProjectionMat = gl.getUniformLocation(this.shaderProgram, "uProjectionMatrix");
         let uniLightPosition = gl.getUniformLocation(this.shaderProgram, "lightPosition");
         let uniAmbient = gl.getUniformLocation(this.shaderProgram, "ambient");
         let uniDiffuse = gl.getUniformLocation(this.shaderProgram, "diffuse");
@@ -76,7 +108,7 @@ export default {
         let uniColor = gl.getUniformLocation(this.shaderProgram, "objectColor");
         let uniShininess = gl.getUniformLocation(this.shaderProgram, "shininess");
 
-        let xRotMat = gl.getUniformLocation(this.shaderProgram, "xRotMatrix");
+        /*let xRotMat = gl.getUniformLocation(this.shaderProgram, "xRotMatrix");
         let yRotMat = gl.getUniformLocation(this.shaderProgram, "yRotMatrix");
         let zRotMat = gl.getUniformLocation(this.shaderProgram, "zRotMatrix");
 
@@ -95,24 +127,7 @@ export default {
           1., 0., 0., 0.,
           0., Math.cos(ang), Math.sin(ang), 0.,
           0., -Math.sin(ang), Math.cos(ang), 0.,
-          0., 0., 0., 1.,]);
-        gl.uniformMatrix4fv(uniModelMat, false, [
-          1., 0., 0., 0.,
-          0., 1., 0., 0.,
-          0., 0., 1., 0.,
-          0., 0., 0., 1.]);
-        gl.uniformMatrix4fv(uniViewMat, false, [
-          0.57735, -0.57735, 0.57735, 0.,
-          0.40825, 0.40825, 0.81650, 0.,
-          -0.70711, -0.70711, 0., 0.,
-          0., 0., -9.19239, 1.,]
-        );
-        gl.uniformMatrix4fv(uniProjectionMat, false, [
-          2.0920502092050206, 0., 0., 0.,
-          0., 3.7323943661971835, 0., 0.,
-          0., 0., -1.002002002002002, -1.,
-          0., 0., -0.20020020020020018, 0.,]
-        );
+          0., 0., 0., 1.,]);*/
         gl.uniform3f(uniLightPosition, 0., 8., 0.);
         gl.uniform3f(uniAmbient, 0.2, 0.2, 0.2);
         gl.uniform3f(uniDiffuse, 0.5, 0.5, 0.5);
@@ -124,113 +139,11 @@ export default {
         // end debug
 
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, this.model.vertex_buffer.length /
-            (3 + (this.model.hasVertexNormal ? 3 : 0) + (this.model.hasTextureCoordinate ? 2 : 0)));
+        this.$refs.attributeModel.glDraw(gl);
       } catch (err) {
         console.log(err);
       }
       requestAnimationFrame(this.redraw);
-    },
-    attachModel(fileName, modelBytesArray) {
-      const that = this;
-      assimpjs().then((ajs) => {
-        let fileList = new ajs.FileList();
-        fileList.AddFile(fileName, modelBytesArray);
-        let result = ajs.ConvertFileList(fileList, 'assjson');
-        if (!result.IsSuccess()) return false;
-
-        let resultFile = result.GetFile(0);
-        let jsonContent = new TextDecoder().decode(resultFile.GetContent());
-        let resultJson = JSON.parse(jsonContent);
-        if (resultJson.meshes.length === 0) return false;
-        if (resultJson.meshes[0].vertices === undefined) return false;
-        if (resultJson.meshes[0].faces === undefined) return false;
-        console.log(resultJson);
-
-        that.model = {
-          hasTextureCoordinate: Array.isArray(resultJson.meshes[0].texturecoords),
-          hasVertexNormal: Array.isArray(resultJson.meshes[0].normals),
-          materials: [],
-          vertex_buffer: [],
-          modelMat: generateIdentityMat4()
-        };
-        if (Array.isArray(resultJson.materials)) {
-          resultJson.materials.forEach(m => {
-            let material = [];
-            m.properties.forEach(prop => {
-              let propType = getType(prop.value);
-              if (propType === 'nan') return;
-              material.push({
-                key: prop.key,
-                type: propType,
-                value: prop.value,
-                uniform: ''
-              });
-            });
-            that.model.materials.push(material);
-          });
-        }
-        /*that.model.vertex_buffer = [
-          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,
-          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
-          0., 0., 1.414,   0., 0., 1.,   0., 0.,
-
-          0., 0., 1.414,   0., 0., 1.,   0., 0.,
-          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
-
-          0., 0., 1.414,   0., 0., 1.,   0., 0.,
-          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,
-
-          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
-          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,];*/
-        resultJson.meshes[0].faces.forEach(face => {
-          face.forEach(vi => {
-            that.model.vertex_buffer.push(resultJson.meshes[0].vertices[vi * 3]);
-            that.model.vertex_buffer.push(resultJson.meshes[0].vertices[vi * 3 + 1]);
-            that.model.vertex_buffer.push(resultJson.meshes[0].vertices[vi * 3 + 2]);
-            if (that.model.hasVertexNormal) {
-              that.model.vertex_buffer.push(resultJson.meshes[0].normals[vi * 3]);
-              that.model.vertex_buffer.push(resultJson.meshes[0].normals[vi * 3 + 1]);
-              that.model.vertex_buffer.push(resultJson.meshes[0].normals[vi * 3 + 2]);
-            }
-            if (that.model.hasTextureCoordinate) {
-              that.model.vertex_buffer.push(resultJson.meshes[0].texturecoords[vi * 2]);
-              that.model.vertex_buffer.push(resultJson.meshes[0].texturecoords[vi * 2 + 1]);
-            }
-          });
-        });
-        that.rebindVertexBuffer();
-        return true;
-      });
-    },
-    rebindVertexBuffer() {
-      if (this.gl === undefined || this.shaderProgram === undefined || this.model.vertex_buffer.length === 0) return;
-
-      const gl = this.gl;
-      let vertex_buffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.model.vertex_buffer), gl.STATIC_DRAW);
-
-      const vertexSize = (3 + (this.model.hasVertexNormal ? 3 : 0) + (this.model.hasTextureCoordinate ? 2 : 0)) * 4;
-      const positionOffset = 0;
-      const normalOffset = 12;
-      const texOffset = normalOffset + (this.model.hasVertexNormal ? 12 : 0);
-      let attrPosition = gl.getAttribLocation(this.shaderProgram, this.attributeMapping.position);
-      gl.vertexAttribPointer(attrPosition, 3, gl.FLOAT, false, vertexSize, positionOffset);
-      gl.enableVertexAttribArray(attrPosition);
-      if (this.model.hasVertexNormal) {
-        let attrNormal = gl.getAttribLocation(this.shaderProgram, this.attributeMapping.normal);
-        gl.vertexAttribPointer(attrNormal, 3, gl.FLOAT, false, vertexSize, normalOffset);
-        gl.enableVertexAttribArray(attrNormal);
-      }
-      if (this.model.hasTextureCoordinate) {
-        let attrTexCoord = gl.getAttribLocation(this.shaderProgram, this.attributeMapping.texCoord);
-        gl.vertexAttribPointer(attrTexCoord, 2, gl.FLOAT, false, vertexSize, texOffset);
-        gl.enableVertexAttribArray(attrTexCoord);
-      }
     },
     recompileShader() {
       if (this.gl === undefined) return;
@@ -268,7 +181,38 @@ export default {
       }
       gl.useProgram(this.shaderProgram);
 
-      this.rebindVertexBuffer();
+      this.$refs.attributeModel.requestRebindVertex();
+    },
+    createNewUniform(type) {
+      let uniformType;
+      switch (type) {
+        case 'float': uniformType = CustomFloatUniformCard; break;
+        case 'vec2': uniformType = CustomVec2UniformCard; break;
+        case 'vec3': uniformType = CustomVec3UniformCard; break;
+        case 'vec4': uniformType = CustomVec4UniformCard; break;
+        case 'mat2': uniformType = CustomMat2UniformCard; break;
+        case 'mat3': uniformType = CustomMat3UniformCard; break;
+        case 'mat4': uniformType = CustomMat4UniformCard; break;
+        default: return;
+      }
+      const uniform = createApp(uniformType, {
+        id: this.nextCustomUniformId,
+        parent: this
+      });
+      let element = document.createElement('div');
+      uniform.mount(element);
+      document.getElementById('custom-uniform-root').appendChild(element);
+      this.customUniforms.push({id: this.nextCustomUniformId, element: element, component: uniform});
+      this.nextCustomUniformId++;
+    },
+    deleteUniform(id) {
+      let idx = 0;
+      while (idx < this.customUniforms.length && this.customUniforms[idx].id !== id) idx++;
+      if (idx < this.customUniforms.length) {
+        this.customUniforms[idx].component.unmount(this.customUniforms[idx].element);
+        this.customUniforms[idx].element.remove();
+        this.customUniforms.splice(idx, 1);
+      }
     }
   },
   created() {
@@ -292,10 +236,10 @@ export default {
     fragXhr.send();
   },
   mounted() {
-    fetch('/assets/cube.fbx')
-        .then(response => response.arrayBuffer())
-        .then(buffer => new Uint8Array(buffer))
-        .then(data => this.attachModel('cube.fbx', data));
+    this.$refs.attributeModel.uploadModels([
+      {name: '正方体（预设）', path: '/assets/models/cube.fbx'},
+      {name: '球体（预设）', path: '/assets/models/sphere.fbx'}
+    ]);
     const canvas = this.$refs.canvas;
     this.gl = canvas.getContext('webgl');
     this.gl.enable(this.gl.DEPTH_TEST);
@@ -304,53 +248,6 @@ export default {
   }
 };
 </script>
-
-<template>
-  <el-container class="swl-all">
-    <el-header class="swl-header-bar">
-      Shader Web Lab
-    </el-header>
-
-    <el-container class="swl-content">
-      <el-aside class="swl-tools-bar">
-
-      </el-aside>
-
-      <el-aside class="swl-aside">
-        <el-header ref="canvasContainer" class="swl-canvas-container">
-          <canvas ref="canvas" class="swl-canvas"/>
-        </el-header>
-        <el-main class="swl-attributes-container">
-          <el-scrollbar style="flex-grow: 1;">
-          <swl-gl-context class="swl-attributes"/>
-          <swl-model-attribute class="swl-attributes"/>
-          <swl-camera-uniform class="swl-attributes"/>
-          <el-popover placement="right" :width="400" trigger="click">
-            <template #reference>
-              <el-button class="swl-attributes" circle :icon="Plus"/>
-            </template>
-            <el-button>Float</el-button>
-            <el-button>Vec2</el-button>
-            <el-button>Vec3</el-button>
-            <el-button>Vec4</el-button>
-            <el-button>Mat2</el-button>
-            <el-button>Mat3</el-button>
-            <el-button>Mat4</el-button>
-          </el-popover>
-          </el-scrollbar>
-        </el-main>
-      </el-aside>
-      <el-aside class="swl-main">
-        <el-header class="swl-vert-container">
-          <v-ace-editor v-model:value="vertShader" lang="glsl" theme="github" class="swl-vert"/>
-        </el-header>
-        <el-footer class="swl-frag-container">
-          <v-ace-editor v-model:value="fragShader" lang="glsl" theme="github" class="swl-frag"/>
-        </el-footer>
-      </el-aside>
-    </el-container>
-  </el-container>
-</template>
 
 <style scoped>
 .swl-all {

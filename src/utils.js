@@ -108,10 +108,11 @@ export function toRotationMat(roll, pitch, yaw) {
 }
 
 export function mathjsMatToArray(mat, transpose = false) {
-    let ret = new Array(mat.size[0] * mat.size[1]);
-    for (let i = 0; i < mat.size[0]; i++) {
-        for (let j = 0; j < mat.size[1]; j++) {
-            ret[(transpose ? i + j * mat.size[0] : i * mat.size[1] + j)] = mat.get([i, j]);
+    const size = mat.size();
+    let ret = new Array(size[0] * size[1]);
+    for (let i = 0; i < size[0]; i++) {
+        for (let j = 0; j < size[1]; j++) {
+            ret[(transpose ? i + j * size[0] : i * size[1] + j)] = mat.get([i, j]);
         }
     }
     return ret;

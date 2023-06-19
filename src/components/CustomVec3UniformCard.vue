@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "CustomFloatUniform"
+  name: "CustomVec3UniformCard"
 }
 </script>
 

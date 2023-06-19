@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "CustomMat4Uniform"
+  name: "CustomVec2UniformCard"
 }
 </script>
 

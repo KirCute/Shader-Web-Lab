@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "CustomMat3Uniform"
+  name: "CustomMat4UniformCard"
 }
 </script>
 
