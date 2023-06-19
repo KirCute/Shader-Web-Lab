@@ -13,6 +13,7 @@ import CustomVec4UniformCard from "./components/CustomVec4UniformCard.vue";
 import CustomMat2UniformCard from "./components/CustomMat2UniformCard.vue";
 import CustomMat3UniformCard from "./components/CustomMat3UniformCard.vue";
 import CustomMat4UniformCard from "./components/CustomMat4UniformCard.vue";
+import CustomTimeUniformCard from "./components/CustomTimeUniformCard.vue";
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
@@ -28,6 +29,7 @@ app.component('swl-vec4-uniform', CustomVec4UniformCard);
 app.component('swl-mat2-uniform', CustomMat2UniformCard);
 app.component('swl-mat3-uniform', CustomMat3UniformCard);
 app.component('swl-mat4-uniform', CustomMat4UniformCard);
+app.component('swl-time-uniform', CustomTimeUniformCard);
 app.use(ElementPlus);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)

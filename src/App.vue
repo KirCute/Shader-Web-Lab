@@ -18,7 +18,16 @@
             <swl-gl-context ref="glContext" class="swl-attributes"/>
             <swl-model-attribute ref="attributeModel" :gl="gl" :shaderProgram="shaderProgram" class="swl-attributes"/>
             <swl-camera-uniform ref="uniformCamera" class="swl-attributes"/>
-            <div id="custom-uniform-root"/>
+            <div v-for="uniform in customUniforms" :key="uniform.id">
+              <swl-float-uniform v-if="uniform.type === 'float'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-vec2-uniform v-if="uniform.type === 'vec2'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-vec3-uniform v-if="uniform.type === 'vec3'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-vec4-uniform v-if="uniform.type === 'vec4'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-mat2-uniform v-if="uniform.type === 'mat2'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-mat3-uniform v-if="uniform.type === 'mat3'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-mat4-uniform v-if="uniform.type === 'mat4'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-time-uniform v-if="uniform.type === 'time'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+            </div>
             <el-popover placement="right" :width="390" trigger="click">
               <template #reference>
                 <el-button class="swl-attributes" circle>
@@ -36,6 +45,7 @@
                 <el-row>
                   <el-button @click="createNewUniform('mat3')">Mat3</el-button>
                   <el-button @click="createNewUniform('mat4')">Mat4</el-button>
+                  <el-button @click="createNewUniform('time')">Time</el-button>
                 </el-row>
               </el-col>
             </el-popover>
@@ -60,14 +70,6 @@ import {VAceEditor} from 'vue3-ace-editor';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
-import {createApp} from "vue";
-import CustomFloatUniformCard from "./components/CustomFloatUniformCard.vue";
-import CustomVec2UniformCard from "./components/CustomVec2UniformCard.vue";
-import CustomVec3UniformCard from "./components/CustomVec3UniformCard.vue";
-import CustomVec4UniformCard from "./components/CustomVec4UniformCard.vue";
-import CustomMat2UniformCard from "./components/CustomMat2UniformCard.vue";
-import CustomMat3UniformCard from "./components/CustomMat3UniformCard.vue";
-import CustomMat4UniformCard from "./components/CustomMat4UniformCard.vue";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
@@ -99,6 +101,11 @@ export default {
 
         this.$refs.uniformCamera.bindUniform(gl, this.shaderProgram);
         this.$refs.attributeModel.bindUniform(gl, this.shaderProgram);
+        if (Array.isArray(this.$refs.customUniforms)) {
+          this.$refs.customUniforms.forEach(uniform => uniform.bindUniform(gl, this.shaderProgram));
+        } else if (typeof(this.$refs.customUniforms) === 'object') {
+          this.$refs.customUniforms.bindUniform(gl, this.shaderProgram);
+        }
 
         // debug
         let uniLightPosition = gl.getUniformLocation(this.shaderProgram, "lightPosition");
@@ -184,35 +191,13 @@ export default {
       this.$refs.attributeModel.requestRebindVertex();
     },
     createNewUniform(type) {
-      let uniformType;
-      switch (type) {
-        case 'float': uniformType = CustomFloatUniformCard; break;
-        case 'vec2': uniformType = CustomVec2UniformCard; break;
-        case 'vec3': uniformType = CustomVec3UniformCard; break;
-        case 'vec4': uniformType = CustomVec4UniformCard; break;
-        case 'mat2': uniformType = CustomMat2UniformCard; break;
-        case 'mat3': uniformType = CustomMat3UniformCard; break;
-        case 'mat4': uniformType = CustomMat4UniformCard; break;
-        default: return;
-      }
-      const uniform = createApp(uniformType, {
-        id: this.nextCustomUniformId,
-        parent: this
-      });
-      let element = document.createElement('div');
-      uniform.mount(element);
-      document.getElementById('custom-uniform-root').appendChild(element);
-      this.customUniforms.push({id: this.nextCustomUniformId, element: element, component: uniform});
+      this.customUniforms.push({id: this.nextCustomUniformId, type: type});
       this.nextCustomUniformId++;
     },
     deleteUniform(id) {
       let idx = 0;
       while (idx < this.customUniforms.length && this.customUniforms[idx].id !== id) idx++;
-      if (idx < this.customUniforms.length) {
-        this.customUniforms[idx].component.unmount(this.customUniforms[idx].element);
-        this.customUniforms[idx].element.remove();
-        this.customUniforms.splice(idx, 1);
-      }
+      if (idx < this.customUniforms.length) this.customUniforms.splice(idx, 1);
     }
   },
   created() {

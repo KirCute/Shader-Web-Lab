@@ -1,8 +1,8 @@
 <template>
-  <card-header :title="'相机：' + getTypeName(this.cameraType)">
+  <card-header :title="'相机: ' + getTypeName(this.cameraType)">
     <el-form label-width="100px" size="small">
       <el-form-item label="相机类型">
-        <el-select v-model="cameraType" placeholder="Select">
+        <el-select v-model="cameraType" style="flex: 1;">
           <el-option key="orthogonal" label="正交相机" :value="0"/>
           <el-option key="perspective" label="透视相机" :value="1"/>
           <el-option key="perspective_aim" label="透视相机（注视一点）" :value="2"/>
@@ -167,31 +167,31 @@ export default {
 
 <style scoped>
 .inline {
-  flex-grow: 1;
+  flex: 1;
   margin-left: 5px;
   margin-right: 5px;
 }
 
 .inline-first {
-  flex-grow: 1;
+  flex: 1;
   margin-right: 5px;
 }
 
 .inline-last {
-  flex-grow: 1;
+  flex: 1;
   margin-left: 5px;
 }
 
 .col-first {
-  margin-bottom: 5px;
+  margin-bottom: 10px;
 }
 
 .col {
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .col-last {
-  margin-top: 5px;
+  margin-top: 10px;
 }
 </style>

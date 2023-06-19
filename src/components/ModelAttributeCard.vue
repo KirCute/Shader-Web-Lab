@@ -2,10 +2,10 @@
   <card-header :title="'模型' + (usingIndexInvalid() ? '' : (': ' + models[usingModel].name))">
     <el-form label-width="100px" size="small">
       <el-form-item label="展示模型">
-        <el-select v-model="selectedModel" placeholder="Select" class="inline-first">
+        <el-select v-model="selectedModel" placeholder="Select" class="show-model">
           <el-option v-for="(m, i) in models" :key="i" :label="m.name" :value="i"/>
         </el-select>
-        <el-button @click="this.$refs.fileInput.click()" class="inline-last">
+        <el-button @click="this.$refs.fileInput.click()" class="upload-button">
           <el-icon class="el-icon--left"><Upload/></el-icon>上传模型
         </el-button>
         <input ref="fileInput" @change="clickUploadFiles" type="file" multiple style="display: none;"/>
@@ -244,32 +244,41 @@ export default {
 </script>
 
 <style scoped>
-.inline {
+.show-model {
   flex-grow: 1;
+  margin-right: 5px;
+}
+
+.upload-button {
+  margin-left: 5px;
+}
+
+.inline {
+  flex: 1;
   margin-left: 5px;
   margin-right: 5px;
 }
 
 .inline-first {
-  flex-grow: 1;
+  flex: 1;
   margin-right: 5px;
 }
 
 .inline-last {
-  flex-grow: 1;
+  flex: 1;
   margin-left: 5px;
 }
 
 .col-first {
-  margin-bottom: 5px;
+  margin-bottom: 10px;
 }
 
 .col {
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .col-last {
-  margin-top: 5px;
+  margin-top: 10px;
 }
 </style>

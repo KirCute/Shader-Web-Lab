@@ -117,3 +117,33 @@ export function mathjsMatToArray(mat, transpose = false) {
     }
     return ret;
 }
+
+export function hexToRgba(hex) {
+    const rgb = hexToRgb(hex.substring(0, 7));
+    const a = parseInt(hex.substring(7, 9), 16) / 255.;
+    return [rgb[0], rgb[1], rgb[2], Number(a.toFixed(3))];
+}
+
+export function rgbaToHex(r, g, b, a) {
+    const hexRGB = rgbToHex(r, g, b);
+    a = a > 1. ? 1. : (a < 0. ? 0. : a);
+    const hexA = Math.round(a * 255).toString(16).padStart(2, '0');
+    return `${hexRGB}${hexA}`.toUpperCase();
+}
+
+export function hexToRgb(hex) {
+    const r = parseInt(hex.substring(1, 3), 16) / 255.;
+    const g = parseInt(hex.substring(3, 5), 16) / 255.;
+    const b = parseInt(hex.substring(5, 7), 16) / 255.;
+    return [Number(r.toFixed(3)), Number(g.toFixed(3)), Number(b.toFixed(3))];
+}
+
+export function rgbToHex(r, g, b) {
+    r = r > 1. ? 1. : (r < 0. ? 0. : r);
+    g = g > 1. ? 1. : (g < 0. ? 0. : g);
+    b = b > 1. ? 1. : (b < 0. ? 0. : b);
+    const hexR = Math.round(r * 255).toString(16).padStart(2, '0');
+    const hexG = Math.round(g * 255).toString(16).padStart(2, '0');
+    const hexB = Math.round(b * 255).toString(16).padStart(2, '0');
+    return `#${hexR}${hexG}${hexB}`.toUpperCase();
+}
