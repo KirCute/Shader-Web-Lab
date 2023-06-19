@@ -19,14 +19,14 @@
             <swl-model-attribute ref="attributeModel" :gl="gl" :shaderProgram="shaderProgram" class="swl-attributes"/>
             <swl-camera-uniform ref="uniformCamera" class="swl-attributes"/>
             <div v-for="uniform in customUniforms" :key="uniform.id">
-              <swl-float-uniform v-if="uniform.type === 'float'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
-              <swl-vec2-uniform v-if="uniform.type === 'vec2'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
-              <swl-vec3-uniform v-if="uniform.type === 'vec3'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
-              <swl-vec4-uniform v-if="uniform.type === 'vec4'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
-              <swl-mat2-uniform v-if="uniform.type === 'mat2'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
-              <swl-mat3-uniform v-if="uniform.type === 'mat3'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
-              <swl-mat4-uniform v-if="uniform.type === 'mat4'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
-              <swl-time-uniform v-if="uniform.type === 'time'" ref="customUniforms" :id="uniform.id" :parent="this" class="swl-attributes"/>
+              <swl-float-uniform v-if="uniform.type === 'float'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-vec2-uniform v-if="uniform.type === 'vec2'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-vec3-uniform v-if="uniform.type === 'vec3'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-vec4-uniform v-if="uniform.type === 'vec4'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-mat2-uniform v-if="uniform.type === 'mat2'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-mat3-uniform v-if="uniform.type === 'mat3'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-mat4-uniform v-if="uniform.type === 'mat4'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-time-uniform v-if="uniform.type === 'time'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
             </div>
             <el-popover placement="right" :width="390" trigger="click">
               <template #reference>
@@ -82,8 +82,15 @@ export default {
       vertShader: '',
       fragShader: '',
       shaderProgram: undefined,
-      customUniforms: [],
-      nextCustomUniformId: 0
+      customUniforms: [
+        {id: 0, type: 'vec3', initValue: [0., 8., 0.], name: 'lightPosition'},
+        {id: 1, type: 'vec3', initValue: [.2, .2, .2], name: 'ambient'},
+        {id: 2, type: 'vec3', initValue: [.5, .5, .5], name: 'diffuse'},
+        {id: 3, type: 'vec3', initValue: [.7, .7, .7], name: 'specular'},
+        {id: 4, type: 'vec3', initValue: [1., .5, .5], name: 'objectColor'},
+        {id: 5, type: 'float', initValue: 120., name: 'shininess'},
+      ],
+      nextCustomUniformId: 6
     };
   },
   components: {
@@ -108,40 +115,6 @@ export default {
         }
 
         // debug
-        let uniLightPosition = gl.getUniformLocation(this.shaderProgram, "lightPosition");
-        let uniAmbient = gl.getUniformLocation(this.shaderProgram, "ambient");
-        let uniDiffuse = gl.getUniformLocation(this.shaderProgram, "diffuse");
-        let uniSpecular = gl.getUniformLocation(this.shaderProgram, "specular");
-        let uniColor = gl.getUniformLocation(this.shaderProgram, "objectColor");
-        let uniShininess = gl.getUniformLocation(this.shaderProgram, "shininess");
-
-        /*let xRotMat = gl.getUniformLocation(this.shaderProgram, "xRotMatrix");
-        let yRotMat = gl.getUniformLocation(this.shaderProgram, "yRotMatrix");
-        let zRotMat = gl.getUniformLocation(this.shaderProgram, "zRotMatrix");
-
-        let ang = Date.now() % 4000 / 2000 * Math.PI
-        gl.uniformMatrix4fv(xRotMat, false, [
-          Math.cos(ang), Math.sin(ang), 0., 0.,
-          -Math.sin(ang), Math.cos(ang), 0., 0.,
-          0., 0., 1., 0.,
-          0., 0., 0., 1.,]);
-        gl.uniformMatrix4fv(yRotMat, false, [
-          Math.cos(ang), 0., -Math.sin(ang), 0.,
-          0., 1., 0., 0.,
-          Math.sin(ang), 0., Math.cos(ang), 0.,
-          0., 0., 0., 1.,]);
-        gl.uniformMatrix4fv(zRotMat, false, [
-          1., 0., 0., 0.,
-          0., Math.cos(ang), Math.sin(ang), 0.,
-          0., -Math.sin(ang), Math.cos(ang), 0.,
-          0., 0., 0., 1.,]);*/
-        gl.uniform3f(uniLightPosition, 0., 8., 0.);
-        gl.uniform3f(uniAmbient, 0.2, 0.2, 0.2);
-        gl.uniform3f(uniDiffuse, 0.5, 0.5, 0.5);
-        gl.uniform3f(uniSpecular, 0.7, 0.7, 0.7);
-        gl.uniform3f(uniColor, 1.0, 0.5, 0.5);
-        gl.uniform1f(uniShininess, 120.0);
-
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         // end debug
 

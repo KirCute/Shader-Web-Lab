@@ -47,11 +47,15 @@
 <script>
 export default {
   name: "CustomTimeUniformCard",
-  props: {id: Number, parent: Object},
+  props: {
+    id: Number,
+    parent: Object,
+    name: {type: String, default: ''}
+  },
   data() {
     return {
       showDeleteDialog: false,
-      uniformName: 'uUnnamed' + this.id,
+      uniformName: this.name.length === 0 ? 'uUnnamed' + this.id : this.name,
       modType: 0,
       divCoefficient: 1.,
       offset: 0.,

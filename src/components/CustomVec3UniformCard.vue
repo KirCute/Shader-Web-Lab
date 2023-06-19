@@ -34,7 +34,12 @@ import {rgbToHex ,hexToRgb} from "../utils";
 
 export default {
   name: "CustomVec3UniformCard",
-  props: {id: Number, parent: Object, initValue: {type: Array, default: [0., 0., 0.]}},
+  props: {
+    id: Number,
+    parent: Object,
+    initValue: {type: Array, default: [0., 0., 0.]},
+    name: {type: String, default: ''}
+  },
   computed: {
     color: {
       get: function () {
@@ -51,7 +56,7 @@ export default {
   data() {
     return {
       showDeleteDialog: false,
-      uniformName: 'uUnnamed' + this.id,
+      uniformName: this.name.length === 0 ? 'uUnnamed' + this.id : this.name,
       value: this.initValue.concat(),
       step: 0.1,
     };

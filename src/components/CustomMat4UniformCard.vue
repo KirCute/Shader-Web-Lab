@@ -53,12 +53,13 @@ export default {
   props: {
     id: Number,
     parent: Object,
-    initValue: {type: Array, default: [1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.]}
+    initValue: {type: Array, default: [1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.]},
+    name: {type: String, default: ''}
   },
   data() {
     return {
       showDeleteDialog: false,
-      uniformName: 'uUnnamed' + this.id,
+      uniformName: this.name.length === 0 ? 'uUnnamed' + this.id : this.name,
       value: this.initValue.concat(),
       step: 0.1,
     };
