@@ -1,5 +1,5 @@
 <template>
-  <card-header :title="'时间相关变量' + (uniformName.length === 0 ? '' : ': '+ uniformName)">
+  <card-header :init-expanded="expanded" :title="'时间相关变量' + (uniformName.length === 0 ? '' : ': '+ uniformName)">
     <el-form label-width="100px" size="small">
       <el-form-item label="变量名">
         <div style="display: flex; justify-content: space-between; flex: 1;">
@@ -50,16 +50,18 @@ export default {
   props: {
     id: Number,
     parent: Object,
-    name: {type: String, default: ''}
+    initValue: {type: Object, default: {type: 0, div: 1., offset: 0., modValue: 1.}},
+    name: {type: String, default: ''},
+    expanded: {type: Boolean, default: false}
   },
   data() {
     return {
       showDeleteDialog: false,
       uniformName: this.name.length === 0 ? 'uUnnamed' + this.id : this.name,
-      modType: 0,
-      divCoefficient: 1.,
-      offset: 0.,
-      mod: 1.
+      modType: this.initValue.type || 0,
+      divCoefficient: this.initValue.div || 1.,
+      offset: this.initValue.offset || 0.,
+      mod: this.initValue.modValue || 1.,
     };
   },
   methods: {
@@ -88,7 +90,7 @@ export default {
         case 4:
           sampleTime = (Date.now() + this.offset) / this.divCoefficient;
           sign = Math.floor(sampleTime / this.mod) % 2;
-          value = sign === 0 ? sampleTime % this.mod / this.mod : (this.mod - sampleTime % this.mod / this.mod);
+          value = sign === 0 ? sampleTime % this.mod / this.mod : (1. - sampleTime % this.mod / this.mod);
           break;
       }
       gl.uniform1f(uni, value);

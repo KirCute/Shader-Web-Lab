@@ -17,10 +17,13 @@
 <script>
 export default {
   name: "CardHeader",
-  props: ['title'],
+  props: {
+    title: {type: String},
+    initExpanded: {type: Boolean, default: false}
+  },
   data() {
     return {
-      expanded: false
+      expanded: this.initExpanded
     };
   }
 }

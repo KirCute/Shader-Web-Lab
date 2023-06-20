@@ -1,5 +1,5 @@
 <template>
-  <card-header :title="'自定义vec4变量' + (uniformName.length === 0 ? '' : ': '+ uniformName)">
+  <card-header :init-expanded="expanded" :title="'自定义vec4变量' + (uniformName.length === 0 ? '' : ': '+ uniformName)">
     <el-form label-width="100px" size="small">
       <el-form-item label="变量名">
         <div style="display: flex; justify-content: space-between; flex: 1;">
@@ -38,8 +38,9 @@ export default {
   props: {
     id: Number,
     parent: Object,
-    initValue: {type: Array, default: [0., 0., 0., 1.]},
-    name: {type: String, default: ''}
+    initValue: {type: Object, default: {value: [0., 0., 0., 1.], step: .1}},
+    name: {type: String, default: ''},
+    expanded: {type: Boolean, default: false}
   },
   computed: {
     color: {
@@ -59,8 +60,8 @@ export default {
     return {
       showDeleteDialog: false,
       uniformName: this.name.length === 0 ? 'uUnnamed' + this.id : this.name,
-      value: this.initValue.concat(),
-      step: 0.1,
+      value: (this.initValue.value || [0., 0., 0., 1.]).concat(),
+      step: this.initValue.step || .1,
     };
   },
   methods: {

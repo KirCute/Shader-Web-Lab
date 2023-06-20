@@ -19,19 +19,36 @@
             <swl-model-attribute ref="attributeModel" :gl="gl" :shaderProgram="shaderProgram" class="swl-attributes"/>
             <swl-camera-uniform ref="uniformCamera" class="swl-attributes"/>
             <div v-for="uniform in customUniforms" :key="uniform.id">
-              <swl-float-uniform v-if="uniform.type === 'float'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
-              <swl-vec2-uniform v-if="uniform.type === 'vec2'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
-              <swl-vec3-uniform v-if="uniform.type === 'vec3'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
-              <swl-vec4-uniform v-if="uniform.type === 'vec4'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
-              <swl-mat2-uniform v-if="uniform.type === 'mat2'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
-              <swl-mat3-uniform v-if="uniform.type === 'mat3'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
-              <swl-mat4-uniform v-if="uniform.type === 'mat4'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
-              <swl-time-uniform v-if="uniform.type === 'time'" ref="customUniforms" :id="uniform.id" :parent="this" :name="uniform.name" :init-value="uniform.initValue" class="swl-attributes"/>
+              <swl-float-uniform v-if="uniform.type === 'float'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                 :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                 class="swl-attributes"/>
+              <swl-vec2-uniform v-if="uniform.type === 'vec2'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                class="swl-attributes"/>
+              <swl-vec3-uniform v-if="uniform.type === 'vec3'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                class="swl-attributes"/>
+              <swl-vec4-uniform v-if="uniform.type === 'vec4'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                class="swl-attributes"/>
+              <swl-mat2-uniform v-if="uniform.type === 'mat2'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                class="swl-attributes"/>
+              <swl-mat3-uniform v-if="uniform.type === 'mat3'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                class="swl-attributes"/>
+              <swl-mat4-uniform v-if="uniform.type === 'mat4'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                class="swl-attributes"/>
+              <swl-time-uniform v-if="uniform.type === 'time'" ref="customUniforms" :id="uniform.id" :parent="this"
+                                :name="uniform.name" :init-value="uniform.initValue" :expanded="uniform.expanded"
+                                class="swl-attributes"/>
             </div>
-            <el-popover placement="right" :width="390" trigger="click">
+            <el-popover placement="right" :width="390" :visible="addUniformPopoverVisible">
               <template #reference>
-                <el-button class="swl-attributes" circle>
-                  <el-icon class="el-icon"> <Plus/> </el-icon>
+                <el-button class="swl-attributes" circle @click="addUniformPopoverVisible = !addUniformPopoverVisible"
+                           @blur="addUniformPopoverVisible = false">
+                  <el-icon class="el-icon"><Plus/></el-icon>
                 </el-button>
               </template>
               <el-col>
@@ -54,10 +71,10 @@
       </el-aside>
       <el-aside class="swl-main">
         <el-header class="swl-vert-container">
-          <v-ace-editor v-model:value="vertShader" lang="glsl" theme="github" class="swl-vert"/>
+          <v-ace-editor v-model:value="vertShader" @change="recompileShader" lang="glsl" theme="github" class="swl-vert"/>
         </el-header>
         <el-footer class="swl-frag-container">
-          <v-ace-editor v-model:value="fragShader" lang="glsl" theme="github" class="swl-frag"/>
+          <v-ace-editor v-model:value="fragShader" @change="recompileShader" lang="glsl" theme="github" class="swl-frag"/>
         </el-footer>
       </el-aside>
     </el-container>
@@ -83,14 +100,15 @@ export default {
       fragShader: '',
       shaderProgram: undefined,
       customUniforms: [
-        {id: 0, type: 'vec3', initValue: [0., 8., 0.], name: 'lightPosition'},
-        {id: 1, type: 'vec3', initValue: [.2, .2, .2], name: 'ambient'},
-        {id: 2, type: 'vec3', initValue: [.5, .5, .5], name: 'diffuse'},
-        {id: 3, type: 'vec3', initValue: [.7, .7, .7], name: 'specular'},
-        {id: 4, type: 'vec3', initValue: [1., .5, .5], name: 'objectColor'},
-        {id: 5, type: 'float', initValue: 120., name: 'shininess'},
+        {id: 0, type: 'vec3', initValue: {value: [0., 8., 0.]}, name: 'lightPosition'},
+        {id: 1, type: 'vec3', initValue: {value: [.2, .2, .2]}, name: 'ambient'},
+        {id: 2, type: 'vec3', initValue: {value: [.5, .5, .5]}, name: 'diffuse'},
+        {id: 3, type: 'vec3', initValue: {value: [.7, .7, .7]}, name: 'specular'},
+        {id: 4, type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'objectColor'},
+        {id: 5, type: 'float', initValue: {value: 120.}, name: 'shininess'},
       ],
-      nextCustomUniformId: 6
+      nextCustomUniformId: 6,
+      addUniformPopoverVisible: false,
     };
   },
   components: {
@@ -110,7 +128,7 @@ export default {
         this.$refs.attributeModel.bindUniform(gl, this.shaderProgram);
         if (Array.isArray(this.$refs.customUniforms)) {
           this.$refs.customUniforms.forEach(uniform => uniform.bindUniform(gl, this.shaderProgram));
-        } else if (typeof(this.$refs.customUniforms) === 'object') {
+        } else if (typeof (this.$refs.customUniforms) === 'object') {
           this.$refs.customUniforms.bindUniform(gl, this.shaderProgram);
         }
 
@@ -164,7 +182,7 @@ export default {
       this.$refs.attributeModel.requestRebindVertex();
     },
     createNewUniform(type) {
-      this.customUniforms.push({id: this.nextCustomUniformId, type: type});
+      this.customUniforms.push({id: this.nextCustomUniformId, type: type, expanded: true});
       this.nextCustomUniformId++;
     },
     deleteUniform(id) {
