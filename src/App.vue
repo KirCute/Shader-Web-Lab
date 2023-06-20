@@ -2,6 +2,13 @@
   <el-container class="swl-all">
     <el-header class="swl-header-bar">
       Shader Web Lab
+      <div style="flex: 1;"/>
+      <el-link class="swl-header-button" href="https://kircute.jimmytoluene.com">
+        <el-icon :size="20"><Avatar/></el-icon>
+      </el-link>
+      <el-link class="swl-header-button">
+        <el-icon :size="20"><InfoFilled/></el-icon>
+      </el-link>
     </el-header>
 
     <el-container class="swl-content">
@@ -47,8 +54,8 @@
             <el-popover placement="right" :width="390" :visible="addUniformPopoverVisible">
               <template #reference>
                 <el-button class="swl-attributes" circle @click="addUniformPopoverVisible = !addUniformPopoverVisible"
-                           @blur="addUniformPopoverVisible = false">
-                  <el-icon class="el-icon"><Plus/></el-icon>
+                           @blur="addUniformPopoverVisible = false" type="primary">
+                  <el-icon><Plus/></el-icon>
                 </el-button>
               </template>
               <el-col>
@@ -87,6 +94,7 @@ import {VAceEditor} from 'vue3-ace-editor';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
+import {Avatar, InfoFilled} from "@element-plus/icons-vue";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
@@ -112,6 +120,8 @@ export default {
     };
   },
   components: {
+    Avatar,
+    InfoFilled,
     VAceEditor,
   },
   methods: {
@@ -133,7 +143,7 @@ export default {
         }
 
         // debug
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearColor(0., 0., 0., 1.0);
         // end debug
 
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -239,14 +249,23 @@ export default {
   width: 100%;
   height: 40px;
   overflow: hidden;
-  background-color: darkblue;
+  display: flex;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #D4D7DE;
+}
+
+.swl-header-button {
+  margin: 5px;
+  user-select: none;
+  background: white;
 }
 
 .swl-tools-bar {
   width: 4vw;
   height: 100%;
   overflow: hidden;
-  background-color: blue;
+  border-right: 1px solid #D4D7DE;
 }
 
 .swl-content {
@@ -266,7 +285,7 @@ export default {
   width: 56vw;
   height: 100%;
   overflow: hidden;
-  border-left: 1px solid #ccc;
+  border-left: 1px solid #D4D7DE;
 }
 
 .swl-canvas-container {
@@ -293,7 +312,7 @@ export default {
   padding: 0;
   overflow-x: hidden;
   overflow-y: hidden;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #D4D7DE;
 }
 
 .swl-frag-container {

@@ -84,7 +84,7 @@ export default {
       cameraType: 1,
       viewPositionD: 5.,
       viewPositionX: 5.,
-      viewPositionY: 5.,
+      viewPositionY: 6.5,
       viewPositionZ: 5.,
       viewRotationRoll: -0.785,
       viewRotationPitch: 0.785,

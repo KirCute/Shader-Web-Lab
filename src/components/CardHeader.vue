@@ -3,12 +3,12 @@
     <template v-if="expanded" #header>
       <div class="card-header">
         <span>{{ title }}</span>
-        <el-button class="button" text @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-button>
+        <el-link class="ban-select" :underline="false" @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-link>
       </div>
     </template>
     <div v-if="!expanded" class="card-header">
       <span>{{ title }}</span>
-      <el-button class="button" text @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-button>
+      <el-link class="ban-select" :underline="false" @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-link>
     </div>
     <slot v-if="expanded"/>
   </el-card>
@@ -34,5 +34,10 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.ban-select {
+  user-select: none;
+  background: white;
 }
 </style>
