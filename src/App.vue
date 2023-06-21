@@ -23,10 +23,20 @@
     <el-container class="swl-content">
       <el-aside class="swl-tools-bar">
         <div style="flex: 1;"/>
-        <el-badge is-dot class="swl-tools-button">
-          <el-link :underline="false" style="background: transparent;">
+        <el-badge is-dot class="swl-tools-button" :hidden="!log.fragmentCompileError && !log.vertexCompileError && !log.shaderLinkError">
+          <el-link :underline="false" style="background: transparent;" @click="logDrawerVisible = !logDrawerVisible">
             <el-icon size="1.6vw"><Bell/></el-icon>
           </el-link>
+          <el-drawer v-model="logDrawerVisible" title="着色器编译日志" direction="ltr">
+            <el-text tag="b" size="large" style="font-weight: bold;">顶点着色器</el-text>
+            <p>{{ log.vertexCompileLog }}</p>
+            <el-divider/>
+            <el-text tag="b" size="large" style="font-weight: bold;">片段着色器</el-text>
+            <p>{{ log.fragmentCompileLog }}</p>
+            <el-divider/>
+            <el-text tag="b" size="large" style="font-weight: bold;">链接</el-text>
+            <p>{{ log.shaderLinkLog }}</p>
+          </el-drawer>
         </el-badge>
         <el-link :underline="false" class="swl-tools-button">
           <el-icon size="1.6vw"><Setting/></el-icon>
@@ -111,7 +121,7 @@ import {VAceEditor} from 'vue3-ace-editor';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
-import {Avatar, InfoFilled, Plus, Moon, Sunny, Share, Bell, Setting} from "@element-plus/icons-vue";
+import {Avatar, Bell, InfoFilled, Moon, Plus, Setting, Share, Sunny} from "@element-plus/icons-vue";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
@@ -134,6 +144,15 @@ export default {
       ],
       nextCustomUniformId: 6,
       addUniformPopoverVisible: false,
+      logDrawerVisible: false,
+      log: {
+        vertexCompileError: false,
+        vertexCompileLog: "",
+        fragmentCompileError: false,
+        fragmentCompileLog: "",
+        shaderLinkError: false,
+        shaderLinkLog: ""
+      },
     };
   },
   components: {
@@ -173,34 +192,42 @@ export default {
       gl.shaderSource(vertShader, this.vertShader);
       gl.compileShader(vertShader);
       if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
-        const log = gl.getShaderInfoLog(vertShader);
-        // todo
-        console.error(log);
-        return;
+        this.log.vertexCompileLog = gl.getShaderInfoLog(vertShader);
+        this.log.vertexCompileError = true;
+      } else {
+        this.log.vertexCompileLog = "编译通过";
+        this.log.vertexCompileError = false;
       }
 
       let fragShader = gl.createShader(gl.FRAGMENT_SHADER);
       gl.shaderSource(fragShader, this.fragShader);
       gl.compileShader(fragShader);
       if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
-        const log = gl.getShaderInfoLog(fragShader);
-        // todo
-        console.error(log);
-        return;
+        this.log.fragmentCompileLog = gl.getShaderInfoLog(fragShader);
+        this.log.fragmentCompileError = true;
+      } else {
+        this.log.fragmentCompileLog = "编译通过";
+        this.log.fragmentCompileError = false;
       }
 
+      if (this.log.vertexCompileError || this.log.fragmentCompileError) {
+        this.log.shaderLinkLog = "未链接";
+        return;
+      }
       this.shaderProgram = gl.createProgram();
       gl.attachShader(this.shaderProgram, vertShader);
       gl.attachShader(this.shaderProgram, fragShader);
       gl.linkProgram(this.shaderProgram);
       if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
-        const log = gl.getProgramInfoLog(this.shaderProgram);
-        // todo
-        console.error(log);
+        this.log.shaderLinkLog = gl.getProgramInfoLog(this.shaderProgram);
+        this.log.shaderLinkError = true;
         return;
+      } else {
+        this.log.shaderLinkLog = "链接成功";
+        this.log.shaderLinkError = false;
       }
-      gl.useProgram(this.shaderProgram);
 
+      gl.useProgram(this.shaderProgram);
       this.$refs.attributeModel.requestRebindVertex();
     },
     createNewUniform(type) {
@@ -324,8 +351,6 @@ export default {
   overflow-x: hidden;
   overflow-y: auto;
   padding: 1px 0;
-  //background-image: url('/assets/5px_grid.png');
-  //background-repeat: repeat;
 }
 
 .swl-attributes {
