@@ -1,8 +1,17 @@
 <template>
   <el-container class="swl-all">
     <el-header class="swl-header-bar">
-      Shader Web Lab
+      <img src="./assets/logo.png" alt="Shader Web Lab" style="width: 130px; height: 30px;"/>
       <div style="flex: 1;"/>
+      <el-link class="swl-header-button">
+        <el-icon :size="20"><Sunny/></el-icon>
+      </el-link>
+      <el-link class="swl-header-button">
+        <el-icon :size="20"><Moon/></el-icon>
+      </el-link>
+      <el-link class="swl-header-button">
+        <el-icon :size="20"><Share/></el-icon>
+      </el-link>
       <el-link class="swl-header-button" href="https://kircute.jimmytoluene.com">
         <el-icon :size="20"><Avatar/></el-icon>
       </el-link>
@@ -13,7 +22,15 @@
 
     <el-container class="swl-content">
       <el-aside class="swl-tools-bar">
-
+        <div style="flex: 1;"/>
+        <el-badge is-dot class="swl-tools-button">
+          <el-link :underline="false" style="background: transparent;">
+            <el-icon size="1.6vw"><Bell/></el-icon>
+          </el-link>
+        </el-badge>
+        <el-link :underline="false" class="swl-tools-button">
+          <el-icon size="1.6vw"><Setting/></el-icon>
+        </el-link>
       </el-aside>
 
       <el-aside class="swl-aside">
@@ -94,7 +111,7 @@ import {VAceEditor} from 'vue3-ace-editor';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
-import {Avatar, InfoFilled} from "@element-plus/icons-vue";
+import {Avatar, InfoFilled, Plus, Moon, Sunny, Share, Bell, Setting} from "@element-plus/icons-vue";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
@@ -120,8 +137,7 @@ export default {
     };
   },
   components: {
-    Avatar,
-    InfoFilled,
+    Plus, Avatar, InfoFilled, Sunny, Moon, Share, Bell, Setting,
     VAceEditor,
   },
   methods: {
@@ -141,11 +157,7 @@ export default {
         } else if (typeof (this.$refs.customUniforms) === 'object') {
           this.$refs.customUniforms.bindUniform(gl, this.shaderProgram);
         }
-
-        // debug
-        gl.clearColor(0., 0., 0., 1.0);
-        // end debug
-
+        this.$refs.glContext.clearColor(gl);
         gl.clear(gl.COLOR_BUFFER_BIT);
         this.$refs.attributeModel.glDraw(gl);
       } catch (err) {
@@ -250,22 +262,34 @@ export default {
   height: 40px;
   overflow: hidden;
   display: flex;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  padding: 5px 40px;
   border-bottom: 1px solid #D4D7DE;
+  background-image: url('/assets/header_background.png');
+  background-repeat: repeat;
 }
 
 .swl-header-button {
   margin: 5px;
   user-select: none;
-  background: white;
+  background: transparent;
 }
 
 .swl-tools-bar {
   width: 4vw;
   height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0.7vw;
   border-right: 1px solid #D4D7DE;
+  background-image: url('/assets/header_background.png');
+  background-repeat: repeat;
+}
+
+.swl-tools-button {
+  margin: 0.5vw;
+  user-select: none;
+  background: transparent;
 }
 
 .swl-content {
@@ -300,6 +324,8 @@ export default {
   overflow-x: hidden;
   overflow-y: auto;
   padding: 1px 0;
+  //background-image: url('/assets/5px_grid.png');
+  //background-repeat: repeat;
 }
 
 .swl-attributes {
