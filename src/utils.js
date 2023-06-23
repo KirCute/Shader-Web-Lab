@@ -1,4 +1,9 @@
 import * as math from 'mathjs';
+import config from '../globalConfig';
+
+export function attachPrefixToUrl(url) {
+    return config.baseUrl + url;
+}
 
 export function generateIdentityMat4() {
     return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];

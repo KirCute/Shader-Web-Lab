@@ -2,7 +2,8 @@
   <card-header :title="'模型' + (usingIndexInvalid() ? '' : (': ' + models[usingModel].name))">
     <el-form label-width="100px" size="small">
       <el-form-item label="展示模型">
-        <el-select v-model="selectedModel" placeholder="Select" class="show-model">
+        <el-select v-if="selectedModel < 0" disabled placeholder="加载中，请稍后..." class="show-model"/>
+        <el-select v-else v-model="selectedModel" placeholder="选择模型" class="show-model">
           <el-option v-for="(m, i) in models" :key="i" :label="m.name" :value="i"/>
         </el-select>
         <el-button @click="this.$refs.fileInput.click()" class="upload-button">
@@ -46,10 +47,14 @@
 
 <script>
 import {generateIdentityMat4, getType, mathjsMatToArray, toRotationMat, toTranslationMat} from '../utils'
+import {Upload} from "@element-plus/icons-vue";
 import * as math from "mathjs";
 
 export default {
   name: "ModelAttributeCard",
+  components: {
+    Upload
+  },
   data() {
     return {
       modelMatUniformName: 'uModelMatrix',
@@ -70,7 +75,7 @@ export default {
       usingModel: -1,
       models: [],
       modelMatrix: generateIdentityMat4(),
-      firstRendered: true
+      firstRendered: true,
     };
   },
   methods: {
@@ -232,6 +237,7 @@ export default {
       gl.uniformMatrix4fv(uniModelMat, false, this.modelMatrix);
     },
     glDraw(gl) {
+      if (this.selectedModel < 0) return;
       gl.drawArrays(gl.TRIANGLES, 0, this.models[this.selectedModel].model.vertex_buffer.length /
           (3 + (this.models[this.selectedModel].model.hasVertexNormal ? 3 : 0) +
               (this.models[this.selectedModel].model.hasTextureCoordinate ? 2 : 0)));

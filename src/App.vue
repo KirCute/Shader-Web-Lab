@@ -12,7 +12,7 @@
       <el-link class="swl-header-button">
         <el-icon :size="20"><Share/></el-icon>
       </el-link>
-      <el-link class="swl-header-button" href="https://kircute.jimmytoluene.com">
+      <el-link class="swl-header-button" href="/">
         <el-icon :size="20"><Avatar/></el-icon>
       </el-link>
       <el-link class="swl-header-button">
@@ -122,6 +122,7 @@ import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
 import {Avatar, Bell, InfoFilled, Moon, Plus, Setting, Share, Sunny} from "@element-plus/icons-vue";
+import {attachPrefixToUrl} from "./utils";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
@@ -242,7 +243,7 @@ export default {
   },
   created() {
     const vertXhr = new XMLHttpRequest();
-    vertXhr.open('GET', '/assets/default.vert');
+    vertXhr.open('GET', attachPrefixToUrl('/assets/default.vert'));
     vertXhr.onreadystatechange = () => {
       if (vertXhr.readyState === 4 && vertXhr.status === 200) {
         this.vertShader = vertXhr.responseText;
@@ -251,7 +252,7 @@ export default {
     };
     vertXhr.send();
     const fragXhr = new XMLHttpRequest();
-    fragXhr.open('GET', '/assets/default.frag');
+    fragXhr.open('GET', attachPrefixToUrl('/assets/default.frag'));
     fragXhr.onreadystatechange = () => {
       if (fragXhr.readyState === 4 && fragXhr.status === 200) {
         this.fragShader = fragXhr.responseText;
@@ -262,8 +263,8 @@ export default {
   },
   mounted() {
     this.$refs.attributeModel.uploadModels([
-      {name: '正方体（预设）', path: '/assets/models/cube.fbx'},
-      {name: '球体（预设）', path: '/assets/models/sphere.fbx'}
+      {name: '正方体（预设）', path: attachPrefixToUrl('/assets/models/cube.fbx')},
+      {name: '球体（预设）', path: attachPrefixToUrl('/assets/models/sphere.fbx')}
     ]);
     const canvas = this.$refs.canvas;
     this.gl = canvas.getContext('webgl');
