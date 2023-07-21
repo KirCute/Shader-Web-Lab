@@ -1,25 +1,34 @@
 <template>
-  <card-header :init-expanded="expanded" :title="'自定义float变量' + (uniformName.length === 0 ? '' : ': '+ uniformName)">
+  <card-header :init-expanded="expanded"
+               :title="$t('variable.custom.prefix') + 'float' + $t('variable.custom.suffix') + (uniformName.length === 0 ? '' : ': '+ uniformName)">
     <el-form label-width="100px" size="small">
-      <el-form-item label="变量名">
+      <el-form-item :label="$t('variable.custom.name')">
         <div style="display: flex; justify-content: space-between; flex: 1;">
           <el-input v-model="uniformName" class="uniform-name"/>
-          <el-button @click="showDeleteDialog = true" class="delete-button" type="danger"> <el-icon><Delete/></el-icon> </el-button>
+          <el-button @click="showDeleteDialog = true" class="delete-button" type="danger">
+            <el-icon>
+              <Delete/>
+            </el-icon>
+          </el-button>
         </div>
       </el-form-item>
-      <el-form-item label="值">
+      <el-form-item :label="$t('variable.custom.value')">
         <el-input-number v-model="value" :step="step" style="flex: 1;"/>
       </el-form-item>
-      <el-form-item label="步长">
+      <el-form-item :label="$t('variable.custom.step')">
         <el-input-number v-model="step" :min="0" :step="0.01" style="flex: 1;"/>
       </el-form-item>
     </el-form>
-    <el-dialog v-model="showDeleteDialog" title="删除自定义变量" width="30%" align-center>
-      <span>确定要删除自定义float变量{{ uniformName }}吗？</span>
+    <el-dialog v-model="showDeleteDialog" :title="$t('variable.custom.del.title')" width="30%" align-center>
+      <span>{{
+          $t('variable.custom.del.askPrefix') +
+          $t('variable.custom.prefix') + 'float' + $t('variable.custom.suffix') + uniformName +
+          $t('variable.custom.del.askSuffix')
+        }}</span>
       <template #footer>
       <span class="dialog-footer">
-        <el-button @click="showDeleteDialog = false">取消</el-button>
-        <el-button type="danger" @click="destroy">确认</el-button>
+        <el-button @click="showDeleteDialog = false">{{ $t('variable.custom.del.cancel') }}</el-button>
+        <el-button type="danger" @click="destroy">{{ $t('variable.custom.del.confirm') }}</el-button>
       </span>
       </template>
     </el-dialog>

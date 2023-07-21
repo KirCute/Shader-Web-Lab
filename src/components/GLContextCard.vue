@@ -1,7 +1,7 @@
 <template>
-  <card-header title="OpenGL上下文">
+  <card-header :title="$t('variable.context.title')">
     <el-form label-width="100px" size="small">
-      <el-form-item label="背景色 (RGBA)">
+      <el-form-item :label="$t('variable.context.backgroundColor')">
         <el-input-number v-model="backgroundColor[0]" :step="0.01" :min="0." :max="1." class="inline-first"/>
         <el-input-number v-model="backgroundColor[1]" :step="0.01" :min="0." :max="1." class="inline"/>
         <el-input-number v-model="backgroundColor[2]" :step="0.01" :min="0." :max="1." class="inline"/>
@@ -45,15 +45,15 @@ export default {
     initializeGL(gl) {
       this.gl = gl;
       this.enabled = [
-        {name: 'Blend', symbol: gl.BLEND, value: false},
-        {name: 'Cull face', symbol: gl.CULL_FACE, value: true},
-        {name: 'Depth test', symbol: gl.DEPTH_TEST, value: true},
-        {name: 'Dither', symbol: gl.DITHER, value: false},
-        {name: 'Polygon offset fill', symbol: gl.POLYGON_OFFSET_FILL, value: false},
-        {name: 'Sample alpha to coverage', symbol: gl.SAMPLE_ALPHA_TO_COVERAGE, value: false},
-        {name: 'Sample coverage', symbol: gl.SAMPLE_COVERAGE, value: false},
-        {name: 'Scissor test', symbol: gl.SCISSOR_TEST, value: false},
-        {name: 'Stencil test', symbol: gl.STENCIL_TEST, value: false}
+        {name: this.$t('variable.context.blend'), symbol: gl.BLEND, value: false},
+        {name: this.$t('variable.context.cull'), symbol: gl.CULL_FACE, value: true},
+        {name: this.$t('variable.context.depthTest'), symbol: gl.DEPTH_TEST, value: true},
+        {name: this.$t('variable.context.dither'), symbol: gl.DITHER, value: false},
+        {name: this.$t('variable.context.polygonOffsetFill'), symbol: gl.POLYGON_OFFSET_FILL, value: false},
+        {name: this.$t('variable.context.sampleAlphaToCoverage'), symbol: gl.SAMPLE_ALPHA_TO_COVERAGE, value: false},
+        {name: this.$t('variable.context.smpCoverage'), symbol: gl.SAMPLE_COVERAGE, value: false},
+        {name: this.$t('variable.context.scissorTest'), symbol: gl.SCISSOR_TEST, value: false},
+        {name: this.$t('variable.context.stencilTest'), symbol: gl.STENCIL_TEST, value: false}
       ];
       this.gl.enable(this.gl.DEPTH_TEST);
       this.gl.enable(this.gl.CULL_FACE);

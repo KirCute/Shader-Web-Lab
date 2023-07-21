@@ -27,20 +27,29 @@
           <el-link :underline="false" style="background: transparent;" @click="logDrawerVisible = !logDrawerVisible">
             <el-icon size="1.6vw"><Bell/></el-icon>
           </el-link>
-          <el-drawer v-model="logDrawerVisible" title="着色器编译日志" direction="ltr">
-            <el-text tag="b" size="large" style="font-weight: bold;">顶点着色器</el-text>
+          <el-drawer v-model="logDrawerVisible" :title="$t('shaderLog.title')" direction="ltr">
+            <el-text tag="b" size="large" style="font-weight: bold;">{{ $t('shaderLog.vertShader') }}</el-text>
             <p>{{ log.vertexCompileLog }}</p>
             <el-divider/>
-            <el-text tag="b" size="large" style="font-weight: bold;">片段着色器</el-text>
+            <el-text tag="b" size="large" style="font-weight: bold;">{{ $t('shaderLog.fragShader') }}</el-text>
             <p>{{ log.fragmentCompileLog }}</p>
             <el-divider/>
-            <el-text tag="b" size="large" style="font-weight: bold;">链接</el-text>
+            <el-text tag="b" size="large" style="font-weight: bold;">{{ $t('shaderLog.link') }}</el-text>
             <p>{{ log.shaderLinkLog }}</p>
           </el-drawer>
         </el-badge>
-        <el-link :underline="false" class="swl-tools-button">
+        <el-link :underline="false" class="swl-tools-button" @click="settingDrawerVisible = !settingDrawerVisible">
           <el-icon size="1.6vw"><Setting/></el-icon>
         </el-link>
+        <el-drawer v-model="settingDrawerVisible" :title="$t('setting.title')" direction="ltr">
+          <el-form>
+            <el-form-item label="Language">
+              <el-select v-model="usingLanguage" @change="changeLang">
+                <el-option v-for="lang in validLanguages" :key="lang.symbol" :label="lang.name" :value="lang.symbol"/>
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </el-drawer>
       </el-aside>
 
       <el-aside class="swl-aside">
@@ -115,6 +124,18 @@
   </el-container>
 </template>
 
+<script setup>
+import {useI18n} from "vue-i18n";
+import {validLanguages} from "./lang";
+
+const {locale} = useI18n();
+
+const changeLang = (val) => {
+  locale.value = val;
+  localStorage.setItem('lang', val);
+};
+</script>
+
 <script>
 import {VAceEditor} from 'vue3-ace-editor';
 import ace from 'ace-builds';
@@ -186,6 +207,7 @@ export default {
       nextCustomUniformId: 0,
       addUniformPopoverVisible: false,
       logDrawerVisible: false,
+      settingDrawerVisible: false,
       log: {
         vertexCompileError: false,
         vertexCompileLog: "",
@@ -194,6 +216,7 @@ export default {
         shaderLinkError: false,
         shaderLinkLog: ""
       },
+      usingLanguage: localStorage.getItem('lang') || 'zhCN'
     };
   },
   components: {
@@ -235,7 +258,7 @@ export default {
         this.log.vertexCompileLog = gl.getShaderInfoLog(vertShader);
         this.log.vertexCompileError = true;
       } else {
-        this.log.vertexCompileLog = "编译通过";
+        this.log.vertexCompileLog = this.$t('shaderLog.compilePass');
         this.log.vertexCompileError = false;
       }
 
@@ -246,12 +269,12 @@ export default {
         this.log.fragmentCompileLog = gl.getShaderInfoLog(fragShader);
         this.log.fragmentCompileError = true;
       } else {
-        this.log.fragmentCompileLog = "编译通过";
+        this.log.fragmentCompileLog = this.$t('shaderLog.compilePass');
         this.log.fragmentCompileError = false;
       }
 
       if (this.log.vertexCompileError || this.log.fragmentCompileError) {
-        this.log.shaderLinkLog = "未链接";
+        this.log.shaderLinkLog = this.$t('shaderLog.unlinked');
         return;
       }
       this.shaderProgram = gl.createProgram();
@@ -263,7 +286,7 @@ export default {
         this.log.shaderLinkError = true;
         return;
       } else {
-        this.log.shaderLinkLog = "链接成功";
+        this.log.shaderLinkLog = this.$t('shaderLog.linkPass');
         this.log.shaderLinkError = false;
       }
 
@@ -330,8 +353,8 @@ export default {
     }
     this.$refs.attributeModel.loadQuery(customQuery.model);
     this.$refs.attributeModel.uploadModels([
-      {name: '正方体（预设）', path: attachPrefixToUrl('/assets/models/cube.fbx')},
-      {name: '球体（预设）', path: attachPrefixToUrl('/assets/models/sphere.fbx')}
+      {name: this.$t('variable.model.prefab.cube'), path: attachPrefixToUrl('/assets/models/cube.fbx')},
+      {name: this.$t('variable.model.prefab.sphere'), path: attachPrefixToUrl('/assets/models/sphere.fbx')}
     ]);
     this.$refs.uniformCamera.loadQuery(customQuery.camera);
     const canvas = this.$refs.canvas;

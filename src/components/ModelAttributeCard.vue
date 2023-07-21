@@ -1,39 +1,39 @@
 <template>
-  <card-header :title="'模型' + (usingIndexInvalid() ? '' : (': ' + models[usingModel].name))">
+  <card-header :title="$t('variable.model.title') + (usingIndexInvalid() ? '' : (': ' + models[usingModel].name))">
     <el-form label-width="100px" size="small">
-      <el-form-item label="展示模型">
-        <el-select v-if="selectedModel < 0" disabled placeholder="加载中，请稍后..." class="show-model"/>
-        <el-select v-else v-model="selectedModel" placeholder="选择模型" class="show-model">
+      <el-form-item :label="$t('variable.model.displaying')">
+        <el-select v-if="selectedModel < 0" disabled :placeholder="$t('variable.model.loading')" class="show-model"/>
+        <el-select v-else v-model="selectedModel" :placeholder="$t('variable.model.placeholder')" class="show-model">
           <el-option v-for="(m, i) in models" :key="i" :label="m.name" :value="i"/>
         </el-select>
         <el-button @click="this.$refs.fileInput.click()" class="upload-button">
-          <el-icon class="el-icon--left"><Upload/></el-icon>上传模型
+          <el-icon class="el-icon--left"><Upload/></el-icon> {{ $t('variable.model.upload') }}
         </el-button>
         <input ref="fileInput" @change="clickUploadFiles" type="file" multiple style="display: none;"/>
       </el-form-item>
-      <el-form-item label="顶点位置变量名">
-        <el-input v-if="usingIndexInvalid()" disabled placeholder="顶点位置不存在"/>
+      <el-form-item :label="$t('variable.model.aPosition')">
+        <el-input v-if="usingIndexInvalid()" disabled :placeholder="$t('variable.model.aPositionInvalid')"/>
         <el-input v-else v-model="attributeMapping.position" @change="requestRebindVertex"/>
       </el-form-item>
-      <el-form-item label="顶点法线变量名">
-        <el-input v-if="usingIndexInvalid() || !models[usingModel].model.hasVertexNormal" disabled placeholder="顶点法线不存在"/>
+      <el-form-item :label="$t('variable.model.aNormal')">
+        <el-input v-if="usingIndexInvalid() || !models[usingModel].model.hasVertexNormal" disabled :placeholder="$t('variable.model.aNormalInvalid')"/>
         <el-input v-else v-model="attributeMapping.normal" @change="requestRebindVertex"/>
       </el-form-item>
-      <el-form-item label="纹理坐标变量名">
-        <el-input v-if="usingIndexInvalid() || !models[usingModel].model.hasTextureCoordinate" disabled placeholder="纹理坐标不存在"/>
+      <el-form-item :label="$t('variable.model.aTexCoord')">
+        <el-input v-if="usingIndexInvalid() || !models[usingModel].model.hasTextureCoordinate" disabled :placeholder="$t('variable.model.aTexCoordInvalid')"/>
         <el-input v-else v-model="attributeMapping.texCoord" @change="requestRebindVertex"/>
       </el-form-item>
       <el-divider/>
 
-      <el-form-item label="模型矩阵变量名">
+      <el-form-item :label="$t('variable.model.uModelMat')">
         <el-input v-model="modelMatUniformName"/>
       </el-form-item>
-      <el-form-item label="平移 (XYZ)">
+      <el-form-item :label="$t('variable.model.position')">
         <el-input-number class="inline-first" v-model="pose.x" :step="0.1" @change="reCalculateModelMat"/>
         <el-input-number class="inline" v-model="pose.y" :step="0.1" @change="reCalculateModelMat"/>
         <el-input-number class="inline-last" v-model="pose.z" :step="0.1" @change="reCalculateModelMat"/>
       </el-form-item>
-      <el-form-item label="旋转 (RPY)">
+      <el-form-item :label="$t('variable.model.rotate')">
         <el-slider v-model="pose.roll" :min="-3.14" :max="3.14" :step="0.01" show-input
                    @input="reCalculateModelMat" class="col-first"/>
         <el-slider v-model="pose.pitch" :min="-3.14" :max="3.14" :step="0.01" show-input

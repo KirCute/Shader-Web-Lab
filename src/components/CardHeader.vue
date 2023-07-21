@@ -3,12 +3,16 @@
     <template v-if="expanded" #header>
       <div class="card-header">
         <span>{{ title }}</span>
-        <el-link class="ban-select" :underline="false" @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-link>
+        <el-link class="ban-select" :underline="false" @click="expanded = !expanded">
+          {{ $t('variable.header.fold') }}
+        </el-link>
       </div>
     </template>
     <div v-if="!expanded" class="card-header">
       <span>{{ title }}</span>
-      <el-link class="ban-select" :underline="false" @click="expanded = !expanded">{{ expanded ? '收起' : '展开' }}</el-link>
+      <el-link class="ban-select" :underline="false" @click="expanded = !expanded">
+        {{ $t('variable.header.unfold') }}
+      </el-link>
     </div>
     <slot v-if="expanded"/>
   </el-card>

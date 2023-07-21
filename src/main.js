@@ -2,6 +2,7 @@ import './assets/main.css'
 import {createApp} from 'vue'
 import ElementPlus from 'element-plus'
 import App from './App.vue'
+import I18n from './lang/i18n.js'
 import CardHeader from "./components/CardHeader.vue";
 import GLContextCard from "./components/GLContextCard.vue";
 import ModelAttributeCard from "./components/ModelAttributeCard.vue";
@@ -30,8 +31,9 @@ app.component('swl-mat2-uniform', CustomMat2UniformCard);
 app.component('swl-mat3-uniform', CustomMat3UniformCard);
 app.component('swl-mat4-uniform', CustomMat4UniformCard);
 app.component('swl-time-uniform', CustomTimeUniformCard);
-app.use(ElementPlus);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
+app.use(I18n);
+app.use(ElementPlus);
 app.mount('#app');

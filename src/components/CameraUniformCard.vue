@@ -1,28 +1,28 @@
 <template>
-  <card-header :title="'相机: ' + getTypeName(this.cameraType)">
+  <card-header :title="$t('variable.camera.title') + ': ' + getTypeName(this.cameraType)">
     <el-form label-width="100px" size="small">
-      <el-form-item label="相机类型">
-        <el-select v-model="cameraType" style="flex: 1;">
-          <el-option key="orthogonal" label="正交相机" :value="0"/>
-          <el-option key="perspective" label="透视相机" :value="1"/>
-          <el-option key="perspective_aim" label="透视相机（注视一点）" :value="2"/>
+      <el-form-item :label="$t('variable.camera.type.title')">
+        <el-select v-model="cameraType" style="flex: 1;" @change="reCalculateViewMat">
+          <el-option key="orthogonal" :label="$t('variable.camera.type.orthogonal')" :value="0"/>
+          <el-option key="perspective" :label="$t('variable.camera.type.perspective')" :value="1"/>
+          <el-option key="perspective_staring" :label="$t('variable.camera.type.perspectiveStaring')" :value="2"/>
         </el-select>
       </el-form-item>
       <el-divider/>
 
-      <el-form-item label="观察矩阵变量名">
+      <el-form-item :label="$t('variable.camera.uViewMat')">
         <el-input v-model="viewMatUniformName"/>
       </el-form-item>
       <div v-if="cameraType === 2">
-        <el-form-item label="注视点 (XYZ)">
+        <el-form-item :label="$t('variable.camera.staring.position')">
           <el-input-number class="inline-first" v-model="viewPositionX" :step="0.1" @change="reCalculateViewMat"/>
           <el-input-number class="inline" v-model="viewPositionY" :step="0.1" @change="reCalculateViewMat"/>
           <el-input-number class="inline-last" v-model="viewPositionZ" :step="0.1" @change="reCalculateViewMat"/>
         </el-form-item>
-        <el-form-item label="与注视点间距">
+        <el-form-item :label="$t('variable.camera.staring.depth')">
           <el-input-number v-model="viewPositionD" :step="0.1" @change="reCalculateViewMat"/>
         </el-form-item>
-        <el-form-item label="注视方向 (RPY)">
+        <el-form-item :label="$t('variable.camera.staring.rotation')">
           <el-slider v-model="viewRotationRoll" :min="-3.14" :max="3.14" :step="0.01" show-input
                      @input="reCalculateQuaternion" class="col-first"/>
           <el-slider v-model="viewRotationPitch" :min="-3.14" :max="3.14" :step="0.01" show-input
@@ -32,12 +32,12 @@
         </el-form-item>
       </div>
       <div v-else>
-        <el-form-item label="平移 (XYZ)">
+        <el-form-item :label="$t('variable.camera.position')">
           <el-input-number class="inline-first" v-model="viewPositionX" :step="0.1" @change="reCalculateViewMat"/>
           <el-input-number class="inline" v-model="viewPositionY" :step="0.1" @change="reCalculateViewMat"/>
           <el-input-number class="inline-last" v-model="viewPositionZ" :step="0.1" @change="reCalculateViewMat"/>
         </el-form-item>
-        <el-form-item label="旋转 (RPY)">
+        <el-form-item :label="$t('variable.camera.rotation')">
           <el-slider v-model="viewRotationRoll" :min="-3.14" :max="3.14" :step="0.01" show-input
                      @input="reCalculateQuaternion" class="col-first"/>
           <el-slider v-model="viewRotationPitch" :min="-3.14" :max="3.14" :step="0.01" show-input
@@ -48,21 +48,21 @@
       </div>
       <el-divider/>
 
-      <el-form-item label="投影矩阵变量名">
+      <el-form-item :label="$t('variable.camera.uProjectionMat')">
         <el-input v-model="projectionMatUniformName"/>
       </el-form-item>
-      <el-form-item label="裁切平面距离">
+      <el-form-item :label="$t('variable.camera.clip')">
         <el-slider v-model="projectionClip" :min="0.01" :max="clipMax" :step="0.01" show-input range
                    @input="reCalculateProjectionMat"/>
       </el-form-item>
       <div v-if="cameraType === 0">
-        <el-form-item label="目标立方体宽">
+        <el-form-item :label="$t('variable.camera.orthogonalWidth')">
           <el-input-number v-model="projectionOrthogonalWidth" :min="0.1" :step="0.1"
                            @change="reCalculateProjectionMat"/>
         </el-form-item>
       </div>
       <div v-else>
-        <el-form-item label="FOV">
+        <el-form-item :label="$t('variable.camera.fov')">
           <el-slider v-model="projectionFov" :min="0.01" :max="3.14" :step="0.01" show-input
                      @input="reCalculateProjectionMat"/>
         </el-form-item>
@@ -106,11 +106,11 @@ export default {
     getTypeName(type) {
       switch (type) {
         case 0:
-          return '正交相机';
+          return this.$t('variable.camera.type.orthogonal');
         case 1:
-          return '透视相机';
+          return this.$t('variable.camera.type.perspective');
         case 2:
-          return '透视相机（注视一点）';
+          return this.$t('variable.camera.type.perspectiveStaring');
       }
     },
     reCalculateViewMat() {
