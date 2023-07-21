@@ -46,9 +46,10 @@
 </template>
 
 <script>
-import {generateIdentityMat4, getType, mathjsMatToArray, toRotationMat, toTranslationMat} from '../utils'
+import {generateIdentityMat4, getType, isInteger, mathjsMatToArray, toRotationMat, toTranslationMat} from '../utils'
 import {Upload} from "@element-plus/icons-vue";
 import * as math from "mathjs";
+import {toEuler} from '../utils'
 
 export default {
   name: "ModelAttributeCard",
@@ -121,18 +122,21 @@ export default {
         reader.readAsArrayBuffer(selectedFiles[i]);
       }
     },
-    uploadModels(models) {
+    uploadModels(models, callback = undefined) {
       let promises = [];
       models.forEach(m => {
         promises.push(fetch(m.path).then(response => response.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
       });
       Promise.all(promises).then(results => {
+        let failed = [];
         for (let i = 0; i < results.length; i++) {
           if (!this.addModel(models[i].name, results[i])) {
             console.log('err');
+            failed = failed.concat(i);
             // todo 报告模型加载失败
           }
         }
+        if (callback) callback(failed);
       });
     },
     addModel(fileName, modelBytesArray) {
@@ -244,6 +248,42 @@ export default {
     },
     usingIndexInvalid() {
       return this.usingModel < 0 || this.usingModel >= this.models.length;
+    },
+    loadQuery(query) {
+      if (query === undefined) return;
+      if (Array.isArray(query.model)) this.uploadModels(query.model, function (failed) {
+        if (!isInteger(query.selected)) return;
+        let decreaseCount = 0;
+        for (let i = 0; i < failed.length; i++) {
+          if (i < query.selected) decreaseCount++;
+          else if (i === query.selected) return;
+          else break;
+        }
+        this.selectedModel = query.selected - decreaseCount;
+      });
+      if (typeof(query.attributePosition) === 'string') this.attributeMapping.position = query.attributePosition;
+      if (typeof(query.attributeNormal) === 'string') this.attributeMapping.normal = query.attributeNormal;
+      if (typeof(query.attributeTexCoord) === 'string') this.attributeMapping.texCoord = query.attributeTexCoord;
+      if (typeof(query.uniModelMat) === 'string') this.modelMatUniformName = query.uniModelMat;
+      if (Array.isArray(query.pose)) {
+        if (query.pose.length === 6) {
+          this.pose.x = query.pose[0];
+          this.pose.y = query.pose[1];
+          this.pose.z = query.pose[2];
+          this.pose.roll = query.pose[3];
+          this.pose.pitch = query.pose[4];
+          this.pose.yaw = query.pose[5];
+        } else if (query.pose.length === 7) {
+          this.pose.x = query.pose[0];
+          this.pose.y = query.pose[1];
+          this.pose.z = query.pose[2];
+          let euler = toEuler(query.pose[3], query.pose[4], query.pose[5], query.pose[6]);
+          this.pose.roll = euler[0];
+          this.pose.pitch = euler[1];
+          this.pose.yaw = euler[2];
+        }
+        this.reCalculateModelMat();
+      }
     }
   }
 }

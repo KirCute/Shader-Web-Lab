@@ -52,7 +52,7 @@
         <el-input v-model="projectionMatUniformName"/>
       </el-form-item>
       <el-form-item label="裁切平面距离">
-        <el-slider v-model="projectionClip" :min="0.01" :max="20.0" :step="0.01" show-input range
+        <el-slider v-model="projectionClip" :min="0.01" :max="clipMax" :step="0.01" show-input range
                    @input="reCalculateProjectionMat"/>
       </el-form-item>
       <div v-if="cameraType === 0">
@@ -73,7 +73,7 @@
 
 <script>
 import * as math from 'mathjs';
-import {toTranslationMat, toRotationMat, mathjsMatToArray, toQuaternion} from '../utils';
+import {toTranslationMat, toRotationMat, mathjsMatToArray, toQuaternion, toEuler, isInteger} from '../utils';
 
 export default {
   name: "CameraUniform",
@@ -82,10 +82,10 @@ export default {
       viewMatUniformName: 'uViewMatrix',
       projectionMatUniformName: 'uProjectionMatrix',
       cameraType: 1,
-      viewPositionD: 5.,
-      viewPositionX: 5.,
-      viewPositionY: 6.5,
-      viewPositionZ: 5.,
+      viewPositionD: 10.,
+      viewPositionX: 0.,
+      viewPositionY: 0.,
+      viewPositionZ: 0.,
       viewRotationRoll: -0.785,
       viewRotationPitch: 0.785,
       viewRotationYaw: 0.,
@@ -97,9 +97,9 @@ export default {
       projectionFov: 0.785,
       projectionOrthogonalWidth: 1.6,
       projectionClip: [0.1, 20.0],
+      clipMax: 20.0,
       viewMatrix: [1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.],
       projectionMatrix: [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., -1., 0., 0., 0., 0.],
-      firstRendered: true,
     };
   },
   methods: {
@@ -114,14 +114,16 @@ export default {
       }
     },
     reCalculateViewMat() {
+      const translation = toTranslationMat(this.viewPositionX, this.viewPositionY, this.viewPositionZ);
+      const rotation = toRotationMat(this.viewRotationRoll, this.viewRotationPitch, this.viewRotationYaw);
+      let viewMatrix;
       if (this.cameraType === 2) {
-        // todo
+        const depthMat = toTranslationMat(0., 0., this.viewPositionD);
+        viewMatrix = math.inv(math.multiply(math.multiply(translation, rotation), depthMat));
       } else {
-        const translation = toTranslationMat(this.viewPositionX, this.viewPositionY, this.viewPositionZ);
-        const rotation = toRotationMat(this.viewRotationRoll, this.viewRotationPitch, this.viewRotationYaw);
-        const viewMatrix = math.inv(math.multiply(translation, rotation));
-        this.viewMatrix = mathjsMatToArray(viewMatrix, true);
+        viewMatrix = math.inv(math.multiply(translation, rotation));
       }
+      this.viewMatrix = mathjsMatToArray(viewMatrix, true);
     },
     reCalculateProjectionMat() {
       if (this.cameraType === 0) {  // 正交
@@ -151,15 +153,41 @@ export default {
       this.reCalculateViewMat();
     },
     bindUniform(gl, shaderProgram) {
-      if (this.firstRendered) {
-        this.firstRendered = false;
-        this.reCalculateQuaternion();
-        this.reCalculateProjectionMat();
-      }
       const uniViewMat = gl.getUniformLocation(shaderProgram, this.viewMatUniformName);
       const uniProjectionMat = gl.getUniformLocation(shaderProgram, this.projectionMatUniformName);
       gl.uniformMatrix4fv(uniViewMat, false, this.viewMatrix);
       gl.uniformMatrix4fv(uniProjectionMat, false, this.projectionMatrix);
+    },
+    loadQuery(query) {
+      if (isInteger(query.type) && query.type >= 0 && query.type < 3) this.cameraType = query.type;
+      if (typeof (query.uniViewMat) === 'string') this.viewMatUniformName = query.uniViewMat;
+      if (Array.isArray(query.position) && query.position.length === 3) {
+        this.viewPositionX = query.position[0];
+        this.viewPositionY = query.position[1];
+        this.viewPositionZ = query.position[2];
+      }
+      if (Array.isArray(query.rotation)) {
+        if (query.rotation.length === 4) {
+          let rot = toEuler(query.rotation[0], query.rotation[1], query.rotation[2], query.rotation[3]);
+          this.viewRotationRoll = rot[0];
+          this.viewRotationPitch = rot[1];
+          this.viewRotationYaw = rot[2];
+        } else if (query.rotation.length === 3) {
+          this.viewRotationRoll = query.rotation[0];
+          this.viewRotationPitch = query.rotation[1];
+          this.viewRotationYaw = query.rotation[2];
+        }
+      }
+      if (typeof (query.depth) === 'number') this.viewPositionD = query.depth;
+      if (typeof (query.uniProjectionMat) === 'string') this.projectionMatUniformName = query.uniProjectionMat;
+      if (typeof (query.fov) === 'number' && query.number >= 0.01 && query.number <= 3.14) this.projectionFov = query.fov;
+      if (typeof (query.ortRecWidth) === 'number' && query.ortRecWidth >= 0.1) this.projectionOrthogonalWidth = query.ortRecWidth;
+      if (typeof (query.nearClip) === 'number' && typeof(query.farClip) === 'number' && query.nearClip < query.farClip && query.farClip < this.clipMax) {
+        this.projectionClip[0] = query.nearClip;
+        this.projectionClip[1] = query.farClip;
+      }
+      this.reCalculateQuaternion();
+      this.reCalculateProjectionMat();
     }
   }
 }

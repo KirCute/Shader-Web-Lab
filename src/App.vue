@@ -116,17 +116,64 @@
 </template>
 
 <script>
-import ace from 'ace-builds'
 import {VAceEditor} from 'vue3-ace-editor';
+import ace from 'ace-builds';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
 import {Avatar, Bell, InfoFilled, Moon, Plus, Setting, Share, Sunny} from "@element-plus/icons-vue";
-import {attachPrefixToUrl} from "./utils";
+import {attachPrefixToUrl, safeJsonParse} from "./utils";
+import globalConfig from '../globalConfig.js';
+import {convertToCurrentVersion} from "./query";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
 ace.config.setModuleUrl('ace/theme/github', themeGithubUrl);
+
+const defaultQuery = {
+  version: globalConfig.version,
+  context: {
+    backgroundColor: [0., 0., 0., 1.],
+    blend: false,
+    cull: true,
+    depthTest: true,
+    dither: false,
+    polygonOffsetFill: false,
+    sampleAlphaToCoverage: false,
+    smpCoverage: false,
+    scissorTest: false,
+    stencilTest: false
+  },
+  model: {
+    upload: [],
+    selected: undefined,
+    attributePosition: 'aPosition',
+    attributeNormal: 'aNormal',
+    attributeTexCoord: 'aTexCoord',
+    uniModelMat: 'uModelMatrix',
+    pose: [0., 0., 0., 0., 0., 0.]
+  },
+  camera: {
+    type: 2,
+    uniViewMat: 'uViewMatrix',
+    position: [0., 0., 0.],
+    rotation: [-0.785, 0.785, 0.],
+    depth: 10.,
+    uniProjectionMat: 'uProjectionMatrix',
+    fov: 0.785,
+    ortRecWidth: 1.6,
+    nearClip: 0.1,
+    farClip: 20.,
+  },
+  uniforms: [
+    {type: 'vec3', initValue: {value: [0., 8., 0.]}, name: 'lightPosition'},
+    {type: 'vec3', initValue: {value: [.2, .2, .2]}, name: 'ambient'},
+    {type: 'vec3', initValue: {value: [.5, .5, .5]}, name: 'diffuse'},
+    {type: 'vec3', initValue: {value: [.7, .7, .7]}, name: 'specular'},
+    {type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'objectColor'},
+    {type: 'float', initValue: {value: 120.}, name: 'shininess'}
+  ]
+}
 
 export default {
   data() {
@@ -135,15 +182,8 @@ export default {
       vertShader: '',
       fragShader: '',
       shaderProgram: undefined,
-      customUniforms: [
-        {id: 0, type: 'vec3', initValue: {value: [0., 8., 0.]}, name: 'lightPosition'},
-        {id: 1, type: 'vec3', initValue: {value: [.2, .2, .2]}, name: 'ambient'},
-        {id: 2, type: 'vec3', initValue: {value: [.5, .5, .5]}, name: 'diffuse'},
-        {id: 3, type: 'vec3', initValue: {value: [.7, .7, .7]}, name: 'specular'},
-        {id: 4, type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'objectColor'},
-        {id: 5, type: 'float', initValue: {value: 120.}, name: 'shininess'},
-      ],
-      nextCustomUniformId: 6,
+      customUniforms: [],
+      nextCustomUniformId: 0,
       addUniformPopoverVisible: false,
       logDrawerVisible: false,
       log: {
@@ -178,7 +218,6 @@ export default {
           this.$refs.customUniforms.bindUniform(gl, this.shaderProgram);
         }
         this.$refs.glContext.clearColor(gl);
-        gl.clear(gl.COLOR_BUFFER_BIT);
         this.$refs.attributeModel.glDraw(gl);
       } catch (err) {
         console.log(err);
@@ -231,8 +270,14 @@ export default {
       gl.useProgram(this.shaderProgram);
       this.$refs.attributeModel.requestRebindVertex();
     },
-    createNewUniform(type) {
-      this.customUniforms.push({id: this.nextCustomUniformId, type: type, expanded: true});
+    createNewUniform(type, initValue = undefined, name = undefined, expanded = true) {
+      this.customUniforms.push({
+        id: this.nextCustomUniformId,
+        type: type,
+        initValue: initValue,
+        name: name,
+        expanded: expanded
+      });
       this.nextCustomUniformId++;
     },
     deleteUniform(id) {
@@ -242,34 +287,57 @@ export default {
     }
   },
   created() {
-    const vertXhr = new XMLHttpRequest();
-    vertXhr.open('GET', attachPrefixToUrl('/assets/default.vert'));
-    vertXhr.onreadystatechange = () => {
-      if (vertXhr.readyState === 4 && vertXhr.status === 200) {
-        this.vertShader = vertXhr.responseText;
-        this.recompileShader();
-      }
-    };
-    vertXhr.send();
-    const fragXhr = new XMLHttpRequest();
-    fragXhr.open('GET', attachPrefixToUrl('/assets/default.frag'));
-    fragXhr.onreadystatechange = () => {
-      if (fragXhr.readyState === 4 && fragXhr.status === 200) {
-        this.fragShader = fragXhr.responseText;
-        this.recompileShader();
-      }
-    };
-    fragXhr.send();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('vertShader')) {
+      this.vertShader = urlParams.get('vertShader');
+    } else {
+      const vertXhr = new XMLHttpRequest();
+      vertXhr.open('GET', attachPrefixToUrl('/assets/default.vert'));
+      vertXhr.onreadystatechange = () => {
+        if (vertXhr.readyState === 4 && vertXhr.status === 200) {
+          this.vertShader = vertXhr.responseText;
+          this.recompileShader();
+        }
+      };
+      vertXhr.send();
+    }
+    if (urlParams.has('fragShader')) {
+      this.fragShader = urlParams.get('fragShader');
+    } else {
+      const fragXhr = new XMLHttpRequest();
+      fragXhr.open('GET', attachPrefixToUrl('/assets/default.frag'));
+      fragXhr.onreadystatechange = () => {
+        if (fragXhr.readyState === 4 && fragXhr.status === 200) {
+          this.fragShader = fragXhr.responseText;
+          this.recompileShader();
+        }
+      };
+      fragXhr.send();
+    }
+    this.recompileShader();
   },
   mounted() {
+    const urlParams = new URLSearchParams(window.location.search);
+    let customQuery = convertToCurrentVersion(safeJsonParse(urlParams.get('custom')));
+    const queryParseErr = urlParams.has('custom') && customQuery === undefined;
+    customQuery = customQuery || defaultQuery;
+
+    if (queryParseErr) {
+      // TODO summon error dialog
+    }
+    if (Array.isArray(customQuery.uniforms)) {
+      customQuery.uniforms.forEach(uniform => this.createNewUniform(uniform.type, uniform.initValue, uniform.name, false));
+    }
+    this.$refs.attributeModel.loadQuery(customQuery.model);
     this.$refs.attributeModel.uploadModels([
       {name: '正方体（预设）', path: attachPrefixToUrl('/assets/models/cube.fbx')},
       {name: '球体（预设）', path: attachPrefixToUrl('/assets/models/sphere.fbx')}
     ]);
+    this.$refs.uniformCamera.loadQuery(customQuery.camera);
     const canvas = this.$refs.canvas;
     this.gl = canvas.getContext('webgl');
-    this.gl.enable(this.gl.DEPTH_TEST);
-    this.gl.enable(this.gl.CULL_FACE);
+    this.$refs.glContext.initializeGL(this.gl);
+    this.$refs.glContext.loadQuery(customQuery.context);
     requestAnimationFrame(this.redraw);
   }
 };

@@ -8,6 +8,9 @@
         <el-input-number v-model="backgroundColor[3]" :step="0.01" :min="0." :max="1." class="inline"/>
         <el-color-picker v-model="color" show-alpha color-format="hex" class="inline-last"/>
       </el-form-item>
+      <el-form-item v-for="(e, i) in enabled" :key="i" :label="e.name">
+        <el-checkbox v-model="e.value" @change="onEnabledChange(e.symbol, e.value)"/>
+      </el-form-item>
     </el-form>
   </card-header>
 </template>
@@ -33,12 +36,56 @@ export default {
   },
   data() {
     return {
+      gl: undefined,
+      enabled: [],
       backgroundColor: [0., 0., 0., 1.],
     };
   },
   methods: {
-    clearColor(gl) {
-      gl.clearColor(this.backgroundColor[0], this.backgroundColor[1], this.backgroundColor[2], this.backgroundColor[3]);
+    initializeGL(gl) {
+      this.gl = gl;
+      this.enabled = [
+        {name: 'Blend', symbol: gl.BLEND, value: false},
+        {name: 'Cull face', symbol: gl.CULL_FACE, value: true},
+        {name: 'Depth test', symbol: gl.DEPTH_TEST, value: true},
+        {name: 'Dither', symbol: gl.DITHER, value: false},
+        {name: 'Polygon offset fill', symbol: gl.POLYGON_OFFSET_FILL, value: false},
+        {name: 'Sample alpha to coverage', symbol: gl.SAMPLE_ALPHA_TO_COVERAGE, value: false},
+        {name: 'Sample coverage', symbol: gl.SAMPLE_COVERAGE, value: false},
+        {name: 'Scissor test', symbol: gl.SCISSOR_TEST, value: false},
+        {name: 'Stencil test', symbol: gl.STENCIL_TEST, value: false}
+      ];
+      this.gl.enable(this.gl.DEPTH_TEST);
+      this.gl.enable(this.gl.CULL_FACE);
+    },
+    onEnabledChange(symbol, value) {
+      if (value) this.gl.enable(symbol);
+      else this.gl.disable(symbol);
+    },
+    clearColor() {
+      if (this.gl === undefined) return;
+      this.gl.clearColor(
+          this.backgroundColor[0], this.backgroundColor[1], this.backgroundColor[2], this.backgroundColor[3]
+      );
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    },
+    loadQuery(query) {
+      if (this.gl === undefined) return;
+      if (Array.isArray(query.backgroundColor) && (query.backgroundColor.length === 4 || query.backgroundColor.length === 3)) {
+        this.backgroundColor[0] = query.backgroundColor[0];
+        this.backgroundColor[1] = query.backgroundColor[1];
+        this.backgroundColor[2] = query.backgroundColor[2];
+        this.backgroundColor[3] = query.backgroundColor.length === 4 ? query.backgroundColor[3] : 1.0;
+      }
+      if (typeof (query.blend) == 'boolean') this.onEnabledChange(this.gl.BLEND, query.blend);
+      if (typeof (query.cull) == 'boolean') this.onEnabledChange(this.gl.CULL_FACE, query.cull);
+      if (typeof (query.depthTest) == 'boolean') this.onEnabledChange(this.gl.DEPTH_TEST, query.depthTest);
+      if (typeof (query.dither) == 'boolean') this.onEnabledChange(this.gl.DITHER, query.dither);
+      if (typeof (query.polygonOffsetFill) == 'boolean') this.onEnabledChange(this.gl.POLYGON_OFFSET_FILL, query.polygonOffsetFill);
+      if (typeof (query.sampleAlphaToCoverage) == 'boolean') this.onEnabledChange(this.gl.SAMPLE_ALPHA_TO_COVERAGE, query.sampleAlphaToCoverage);
+      if (typeof (query.smpCoverage) == 'boolean') this.onEnabledChange(this.gl.SAMPLE_COVERAGE, query.smpCoverage);
+      if (typeof (query.scissorTest) == 'boolean') this.onEnabledChange(this.gl.SCISSOR_TEST, query.scissorTest);
+      if (typeof (query.stencilTest) == 'boolean') this.onEnabledChange(this.gl.STENCIL_TEST, query.stencilTest);
     }
   }
 }

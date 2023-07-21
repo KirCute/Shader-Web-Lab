@@ -152,3 +152,16 @@ export function rgbToHex(r, g, b) {
     const hexB = Math.round(b * 255).toString(16).padStart(2, '0');
     return `#${hexR}${hexG}${hexB}`.toUpperCase();
 }
+
+export function safeJsonParse(str) {
+    if (str === undefined || str === null) return undefined;
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        return undefined;
+    }
+}
+
+export function isInteger(n) {
+    return (typeof n === 'number') && ((n | 0) === n);
+}
