@@ -1,0 +1,45 @@
+.theme-dark .swl-header-bar {
+    background-color: #545c64;
+    border-bottom: 1px solid #ffd04b;
+}
+
+.theme-dark .swl-logo {
+    background-image: url("/assets/logo_solid.png");
+}
+
+.theme-dark .swl-tools-bar {
+    background-color: #545c64;
+    border-right: 1px solid #ffd04b;
+}
+
+.theme-dark .swl-main {
+    border-left: 1px solid #ffd04b;
+}
+
+.theme-dark .swl-vert-container {
+    border-bottom: 1px solid #ffd04b;
+}
+
+.theme-dark svg {
+    color: #ffd04b;
+}
+
+.theme-dark .swl-attributes-container {
+    background-color: black;
+}
+
+.theme-dark .swl-attributes {
+    background-color: #545c64;
+}
+
+.theme-dark .swl-add-attribute-button {
+    background-color: #545c64;
+}
+
+.theme-dark .swl-attribute-title {
+    color: #ffd04b;
+}
+
+.theme-dark .swl-expand-button {
+    color: #ffd04b;
+}

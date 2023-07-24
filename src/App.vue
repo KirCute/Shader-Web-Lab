@@ -1,18 +1,18 @@
 <template>
-  <el-container class="swl-all">
+  <el-container :class="'swl-all theme-' + theme">
     <el-header class="swl-header-bar">
-      <img src="./assets/logo.png" alt="Shader Web Lab" style="width: 130px; height: 30px;"/>
+      <div class="swl-logo"/>
       <div style="flex: 1;"/>
-      <el-link class="swl-header-button">
+      <el-link class="swl-header-button" v-if="theme === 'dark'" @click="theme = 'light'">
         <el-icon :size="20"><Sunny/></el-icon>
       </el-link>
-      <el-link class="swl-header-button">
+      <el-link class="swl-header-button" v-else @click="theme = 'dark'">
         <el-icon :size="20"><Moon/></el-icon>
       </el-link>
       <el-link class="swl-header-button">
         <el-icon :size="20"><Share/></el-icon>
       </el-link>
-      <el-link class="swl-header-button" href="/">
+      <el-link class="swl-header-button" :href="globalConfig.personalIndex">
         <el-icon :size="20"><Avatar/></el-icon>
       </el-link>
       <el-link class="swl-header-button">
@@ -44,8 +44,13 @@
         <el-drawer v-model="settingDrawerVisible" :title="$t('setting.title')" direction="ltr">
           <el-form>
             <el-form-item label="Language">
-              <el-select v-model="usingLanguage" @change="changeLang">
+              <el-select v-model="usingLanguage" @change="changeLang" style="flex: 1;">
                 <el-option v-for="lang in validLanguages" :key="lang.symbol" :label="lang.name" :value="lang.symbol"/>
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="$t('setting.theme')">
+              <el-select v-model="theme" style="flex: 1;">
+                <el-option v-for="t in getAvailableThemes()" :key="t" :label="$t('theme.' + t)" :value="t"/>
               </el-select>
             </el-form-item>
           </el-form>
@@ -89,8 +94,8 @@
             </div>
             <el-popover placement="right" :width="390" :visible="addUniformPopoverVisible">
               <template #reference>
-                <el-button class="swl-attributes" circle @click="addUniformPopoverVisible = !addUniformPopoverVisible"
-                           @blur="addUniformPopoverVisible = false" type="primary">
+                <el-button class="swl-add-attribute-button" circle @click="addUniformPopoverVisible = !addUniformPopoverVisible"
+                           @blur="addUniformPopoverVisible = false">
                   <el-icon><Plus/></el-icon>
                 </el-button>
               </template>
@@ -127,6 +132,8 @@
 <script setup>
 import {useI18n} from "vue-i18n";
 import {validLanguages} from "./lang";
+import globalConfig from '../globalConfig.js';
+import {getAvailableThemes} from "./theme";
 
 const {locale} = useI18n();
 
@@ -216,7 +223,8 @@ export default {
         shaderLinkError: false,
         shaderLinkLog: ""
       },
-      usingLanguage: localStorage.getItem('lang') || 'zhCN'
+      usingLanguage: localStorage.getItem('lang') || 'zhCN',
+      theme: 'light'
     };
   },
   components: {
@@ -367,6 +375,8 @@ export default {
 </script>
 
 <style scoped>
+@import "/src/assets/theme/all.css";
+
 .swl-all {
   width: 100vw;
   height: 100vh;
@@ -382,9 +392,14 @@ export default {
   overflow: hidden;
   display: flex;
   padding: 5px 40px;
-  border-bottom: 1px solid #D4D7DE;
-  background-image: url('/assets/header_background.png');
   background-repeat: repeat;
+}
+
+.swl-logo {
+  width: 130px;
+  height: 30px;
+  background-size: cover;
+  background-position: center;
 }
 
 .swl-header-button {
@@ -400,8 +415,6 @@ export default {
   display: flex;
   flex-direction: column;
   padding: 0.7vw;
-  border-right: 1px solid #D4D7DE;
-  background-image: url('/assets/header_background.png');
   background-repeat: repeat;
 }
 
@@ -428,7 +441,6 @@ export default {
   width: 56vw;
   height: 100%;
   overflow: hidden;
-  border-left: 1px solid #D4D7DE;
 }
 
 .swl-canvas-container {
@@ -449,13 +461,16 @@ export default {
   margin: 10px var(--el-main-padding);
 }
 
+.swl-add-attribute-button {
+  margin: 10px var(--el-main-padding);
+}
+
 .swl-vert-container {
   width: 100%;
   height: 50%;
   padding: 0;
   overflow-x: hidden;
   overflow-y: hidden;
-  border-bottom: 1px solid #D4D7DE;
 }
 
 .swl-frag-container {

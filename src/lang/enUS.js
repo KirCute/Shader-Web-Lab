@@ -104,6 +104,11 @@ export default {
         unlinked: 'Unlinked'
     },
     setting: {
-        title: 'Setting'
+        title: 'Setting',
+        theme: 'Theme'
+    },
+    theme: {
+        light: 'Light',
+        dark: 'Dark'
     }
 }

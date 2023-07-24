@@ -104,6 +104,11 @@ export default {
         unlinked: '未链接'
     },
     setting: {
-        title: '设置'
+        title: '设置',
+        theme: '主题'
+    },
+    theme: {
+        light: '白昼模式',
+        dark: '黑夜模式'
     }
 }

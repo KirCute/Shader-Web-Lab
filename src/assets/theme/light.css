@@ -1,0 +1,33 @@
+.theme-light .swl-header-bar {
+    background-image: url('/assets/header_background.png');
+    border-bottom: 1px solid #D4D7DE;
+}
+
+.theme-light .swl-logo {
+    background-image: url("/assets/logo.png");
+}
+
+.theme-light .swl-tools-bar {
+    background-image: url('/assets/header_background.png');
+    border-right: 1px solid #D4D7DE;
+}
+
+.theme-light .swl-main {
+    border-left: 1px solid #D4D7DE;
+}
+
+.theme-light .swl-vert-container {
+    border-bottom: 1px solid #D4D7DE;
+}
+
+.theme-light .swl-attributes-container {
+    background-color: white;
+}
+
+.theme-light .swl-attributes {
+    background-color: white;
+}
+
+.theme-light .swl-add-attribute-button {
+    background-color: #409eff;
+}

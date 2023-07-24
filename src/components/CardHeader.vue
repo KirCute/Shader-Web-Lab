@@ -2,15 +2,15 @@
   <el-card>
     <template v-if="expanded" #header>
       <div class="card-header">
-        <span>{{ title }}</span>
-        <el-link class="ban-select" :underline="false" @click="expanded = !expanded">
+        <span class="swl-attribute-title">{{ title }}</span>
+        <el-link class="swl-expand-button ban-select" :underline="false" @click="expanded = !expanded">
           {{ $t('variable.header.fold') }}
         </el-link>
       </div>
     </template>
     <div v-if="!expanded" class="card-header">
-      <span>{{ title }}</span>
-      <el-link class="ban-select" :underline="false" @click="expanded = !expanded">
+      <span class="swl-attribute-title">{{ title }}</span>
+      <el-link class="swl-expand-button ban-select" :underline="false" @click="expanded = !expanded">
         {{ $t('variable.header.unfold') }}
       </el-link>
     </div>
@@ -34,6 +34,8 @@ export default {
 </script>
 
 <style scoped>
+@import "/src/assets/theme/all.css";
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -42,6 +44,6 @@ export default {
 
 .ban-select {
   user-select: none;
-  background: white;
+  background: transparent;
 }
 </style>

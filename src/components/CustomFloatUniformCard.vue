@@ -67,6 +67,8 @@ export default {
 </script>
 
 <style scoped>
+@import "/src/assets/theme/all.css";
+
 .uniform-name {
   flex-grow: 1;
   margin-right: 5px;

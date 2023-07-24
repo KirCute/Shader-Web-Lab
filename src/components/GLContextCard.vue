@@ -92,6 +92,8 @@ export default {
 </script>
 
 <style scoped>
+@import "/src/assets/theme/all.css";
+
 .inline {
   flex: 1;
   margin-left: 5px;
