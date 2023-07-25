@@ -19,14 +19,22 @@ export default {
         },
         model: {
             title: '模型',
-            prefab: {
-                cube: '正方体（预设）',
-                sphere: '球体（预设）'
-            },
             displaying: '展示模型',
             loading: '加载中，请稍后...',
             placeholder: '选择模型',
             upload: '上传模型',
+            material: {
+                displaying: '使用材质',
+                placeholder: '选择材质',
+                configButton: '材质选项',
+                config: {
+                    title: '材质选项',
+                    key: '键',
+                    type: '类型',
+                    value: '值',
+                    uniform: '映射到'
+                }
+            },
             aPosition: '顶点位置变量名',
             aNormal: '顶点法线变量名',
             aTexCoord: '纹理坐标变量名',

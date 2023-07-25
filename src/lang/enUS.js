@@ -19,14 +19,22 @@ export default {
         },
         model: {
             title: 'Model',
-            prefab: {
-                cube: 'Cube (Prefab)',
-                sphere: 'Sphere (Prefab)'
-            },
             displaying: 'Displaying',
             loading: 'Loading...',
             placeholder: 'Select the model',
             upload: 'Upload',
+            material: {
+                displaying: 'Material',
+                placeholder: 'Select the masterial',
+                configButton: 'Configure',
+                config: {
+                    title: 'Material Configure',
+                    key: 'Key',
+                    type: 'Type',
+                    value: 'Value',
+                    uniform: 'Bind to'
+                }
+            },
             aPosition: 'Position Attribute',
             aNormal: 'Normal Attribute',
             aTexCoord: 'Texture Coordinate Attribute',

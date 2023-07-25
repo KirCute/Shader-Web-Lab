@@ -73,7 +73,7 @@ export default {
     },
     bindUniform(gl, shaderProgram) {
       const uni = gl.getUniformLocation(shaderProgram, this.uniformName);
-      gl.uniform3f(uni, this.value[0], this.value[1], this.value[2]);
+      gl.uniform3fv(uni, this.value);
     }
   }
 }

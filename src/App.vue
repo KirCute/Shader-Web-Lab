@@ -173,13 +173,28 @@ const defaultQuery = {
     stencilTest: false
   },
   model: {
-    upload: [],
-    selected: undefined,
+    upload: [
+      {name: 'Demo Cube', path: attachPrefixToUrl('/assets/models/cube.fbx')},
+      {name: 'Demo Sphere', path: attachPrefixToUrl('/assets/models/sphere.fbx')}
+    ],
+    selected: {
+      fileName: 'Demo Cube',
+      fileIndex: 0,
+      meshName: 'Cube'
+    },
+    materialSelected: {
+      fileName: 'Demo Cube',
+      fileIndex: 0,
+      index: 0
+    },
     attributePosition: 'aPosition',
     attributeNormal: 'aNormal',
     attributeTexCoord: 'aTexCoord',
     uniModelMat: 'uModelMatrix',
-    pose: [0., 0., 0., 0., 0., 0.]
+    pose: [0., 0., 0., 0., 0., 0.],
+    materialBind: [
+      { key: '$raw.Shininess', uni: 'shininess' }
+    ]
   },
   camera: {
     type: 2,
@@ -198,8 +213,7 @@ const defaultQuery = {
     {type: 'vec3', initValue: {value: [.2, .2, .2]}, name: 'ambient'},
     {type: 'vec3', initValue: {value: [.5, .5, .5]}, name: 'diffuse'},
     {type: 'vec3', initValue: {value: [.7, .7, .7]}, name: 'specular'},
-    {type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'objectColor'},
-    {type: 'float', initValue: {value: 120.}, name: 'shininess'}
+    {type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'objectColor'}
   ]
 }
 
@@ -360,10 +374,10 @@ export default {
       customQuery.uniforms.forEach(uniform => this.createNewUniform(uniform.type, uniform.initValue, uniform.name, false));
     }
     this.$refs.attributeModel.loadQuery(customQuery.model);
-    this.$refs.attributeModel.uploadModels([
+    /*this.$refs.attributeModel.uploadModels([
       {name: this.$t('variable.model.prefab.cube'), path: attachPrefixToUrl('/assets/models/cube.fbx')},
       {name: this.$t('variable.model.prefab.sphere'), path: attachPrefixToUrl('/assets/models/sphere.fbx')}
-    ]);
+    ]);*/
     this.$refs.uniformCamera.loadQuery(customQuery.camera);
     const canvas = this.$refs.canvas;
     this.gl = canvas.getContext('webgl');

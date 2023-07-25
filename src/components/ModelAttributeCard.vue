@@ -3,14 +3,38 @@
     <el-form label-width="100px" size="small">
       <el-form-item :label="$t('variable.model.displaying')">
         <el-select v-if="selectedModel < 0" disabled :placeholder="$t('variable.model.loading')" class="show-model"/>
-        <el-select v-else v-model="selectedModel" :placeholder="$t('variable.model.placeholder')" class="show-model">
-          <el-option v-for="(m, i) in models" :key="i" :label="m.name" :value="i"/>
+        <el-select v-else v-model="selectedModel" :placeholder="$t('variable.model.placeholder')" class="show-model"
+                   @change="updateUsingMaterial">
+          <el-option v-for="i in models.length" :key="i-1" :value="i-1" :label="getModelName(i-1)"/>
         </el-select>
         <el-button @click="this.$refs.fileInput.click()" class="upload-button">
           <el-icon class="el-icon--left"><Upload/></el-icon> {{ $t('variable.model.upload') }}
         </el-button>
         <input ref="fileInput" @change="clickUploadFiles" type="file" multiple style="display: none;"/>
       </el-form-item>
+      <el-form-item :label="$t('variable.model.material.displaying')">
+        <el-select v-model="selectedMaterial" :placeholder="$t('variable.model.material.placeholder')" class="show-model" clearable>
+          <el-option v-for="i in materials.length" :key="i-1" :value="i-1" :label="getMaterialName(i-1)"/>
+        </el-select>
+        <el-button :disabled="usingMaterialIndexInvalid()" @click="showMaterialConfigDialog = true" class="upload-button">
+          <el-icon class="el-icon--left"><Setting/></el-icon> {{ $t('variable.model.material.configButton') }}
+        </el-button>
+        <el-dialog v-if="!usingMaterialIndexInvalid()" v-model="showMaterialConfigDialog"
+                   :title="`${$t('variable.model.material.config.title')}: ${getMaterialName(usingMaterial)}`">
+          <el-table :data="materials[usingMaterial].material" style="width: 100%" height="50vh">
+            <el-table-column :label="$t('variable.model.material.config.key')" prop="key"/>
+            <el-table-column :label="$t('variable.model.material.config.type')" prop="type" width="75"/>
+            <el-table-column :label="$t('variable.model.material.config.value')" prop="value"/>
+            <el-table-column :label="$t('variable.model.material.config.uniform')" prop="key">
+              <template #default="scope">
+                <el-input v-model="getMaterialProp(scope.row.key).uniform" placeholder="uniform"/>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-dialog>
+      </el-form-item>
+      <el-divider/>
+
       <el-form-item :label="$t('variable.model.aPosition')">
         <el-input v-if="usingIndexInvalid()" disabled :placeholder="$t('variable.model.aPositionInvalid')"/>
         <el-input v-else v-model="attributeMapping.position" @change="requestRebindVertex"/>
@@ -75,9 +99,26 @@ export default {
       selectedModel: -1,
       usingModel: -1,
       models: [],
+      usingMaterial: -1,
+      materials: [],
+      materialUniforms: {},
+      existFiles: {},
+      autoSwitchMaterial: true,
       modelMatrix: generateIdentityMat4(),
       firstRendered: true,
+      showMaterialConfigDialog: false,
     };
+  },
+  computed: {
+    selectedMaterial: {
+      get() {
+        if (this.usingMaterial < 0) return '';
+        return this.usingMaterial;
+      },
+      set(v) {
+        this.usingMaterial = v === '' || v === undefined ? -1 : Number(v);
+      }
+    }
   },
   methods: {
     rebindVertexBuffer(gl, shaderProgram) {
@@ -114,7 +155,7 @@ export default {
         const reader = new FileReader();
         reader.onload = function (event) {
           const fileContents = new Uint8Array(event.target.result);
-          if (!that.addModel(selectedFiles[i].name, fileContents)) {
+          if (that.addModel(selectedFiles[i].name, fileContents) === 0) {
             console.log('err');
             // todo 报告模型加载失败
           }
@@ -130,7 +171,7 @@ export default {
       Promise.all(promises).then(results => {
         let failed = [];
         for (let i = 0; i < results.length; i++) {
-          if (!this.addModel(models[i].name, results[i])) {
+          if (this.addModel(models[i].name, results[i]) === 0) {
             console.log('err');
             failed = failed.concat(i);
             // todo 报告模型加载失败
@@ -144,74 +185,69 @@ export default {
         let fileList = new ajs.FileList();
         fileList.AddFile(fileName, modelBytesArray);
         let result = ajs.ConvertFileList(fileList, 'assjson');
-        if (!result.IsSuccess()) return false;
+        if (!result.IsSuccess()) return 0;
 
         let resultFile = result.GetFile(0);
         let jsonContent = new TextDecoder().decode(resultFile.GetContent());
         let resultJson = JSON.parse(jsonContent);
-        if (resultJson.meshes.length === 0) return false;
-        if (resultJson.meshes[0].vertices === undefined) return false;
-        if (resultJson.meshes[0].faces === undefined) return false;
+        if (resultJson.meshes.length === 0) return 0;
+        let fileIndex = 0;
+        if (fileName in this.existFiles) {
+          this.existFiles[fileName] += 1;
+          fileIndex = this.existFiles[fileName];
+        } else {
+          this.existFiles[fileName] = 0;
+        }
+        const success = resultJson.meshes.reduce((cnt, mesh) => {
+          if (mesh.vertices === undefined) return cnt;
+          if (mesh.faces === undefined) return cnt;
 
-        let model = {
-          hasTextureCoordinate: Array.isArray(resultJson.meshes[0].texturecoords),
-          hasVertexNormal: Array.isArray(resultJson.meshes[0].normals),
-          materials: [],
-          vertex_buffer: []
-        };
+          const model = {
+            hasTextureCoordinate: Array.isArray(mesh.texturecoords),
+            hasVertexNormal: Array.isArray(mesh.normals),
+            materials: [],
+            vertex_buffer: []
+          };
+          mesh.faces.forEach(face => {
+            face.forEach(vi => {
+              model.vertex_buffer.push(mesh.vertices[vi * 3]);
+              model.vertex_buffer.push(mesh.vertices[vi * 3 + 1]);
+              model.vertex_buffer.push(mesh.vertices[vi * 3 + 2]);
+              if (model.hasVertexNormal) {
+                model.vertex_buffer.push(mesh.normals[vi * 3]);
+                model.vertex_buffer.push(mesh.normals[vi * 3 + 1]);
+                model.vertex_buffer.push(mesh.normals[vi * 3 + 2]);
+              }
+              if (model.hasTextureCoordinate) {
+                model.vertex_buffer.push(mesh.texturecoords[vi * 2]);
+                model.vertex_buffer.push(mesh.texturecoords[vi * 2 + 1]);
+              }
+            });
+          });
+          const meshName = `${mesh.name === undefined ? 'unnamed' : mesh.name}`;
+          this.models.push({name: meshName, fileName: fileName, fileIndex: fileIndex, model: model, material: mesh.materialindex});
+          return cnt + 1;
+        }, 0);
         if (Array.isArray(resultJson.materials)) {
-          resultJson.materials.forEach(m => {
-            let material = [];
+          resultJson.materials.forEach((m, i) => {
+            const material = [];
             m.properties.forEach(prop => {
-              let propType = getType(prop.value);
+              const propType = getType(prop.value);
               if (propType === 'nan') return;
               material.push({
                 key: prop.key,
                 type: propType,
-                value: prop.value,
-                uniform: ''
+                value: prop.value
               });
             });
-            model.materials.push(material);
+            this.materials.push({material: material, fileName: fileName, fileIndex: fileIndex, index: i});
           });
         }
-        /*that.model.vertex_buffer = [
-          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,
-          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
-          0., 0., 1.414,   0., 0., 1.,   0., 0.,
-
-          0., 0., 1.414,   0., 0., 1.,   0., 0.,
-          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
-
-          0., 0., 1.414,   0., 0., 1.,   0., 0.,
-          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,
-
-          -0.866, -1.5, -0.707,   -0.46271, -0.80174, -0.37831,   0., 0.,
-          -0.866, 1.5, -0.707,   -0.46271, 0.80174, -0.37831,   0., 0.,
-          1.732, 0., -0.707,   0.92564, 0., -0.37841,   0., 0.,];*/
-        resultJson.meshes[0].faces.forEach(face => {
-          face.forEach(vi => {
-            model.vertex_buffer.push(resultJson.meshes[0].vertices[vi * 3]);
-            model.vertex_buffer.push(resultJson.meshes[0].vertices[vi * 3 + 1]);
-            model.vertex_buffer.push(resultJson.meshes[0].vertices[vi * 3 + 2]);
-            if (model.hasVertexNormal) {
-              model.vertex_buffer.push(resultJson.meshes[0].normals[vi * 3]);
-              model.vertex_buffer.push(resultJson.meshes[0].normals[vi * 3 + 1]);
-              model.vertex_buffer.push(resultJson.meshes[0].normals[vi * 3 + 2]);
-            }
-            if (model.hasTextureCoordinate) {
-              model.vertex_buffer.push(resultJson.meshes[0].texturecoords[vi * 2]);
-              model.vertex_buffer.push(resultJson.meshes[0].texturecoords[vi * 2 + 1]);
-            }
-          });
-        });
-        this.models.push({name: fileName, model: model});
-        if (this.selectedModel < 0) {
+        if (this.selectedModel < 0 && this.models.length > 0) {
           this.selectedModel = 0;
+          this.updateUsingMaterial();
         }
-        return true;
+        return success;
       });
     },
     requestRebindVertex() {
@@ -239,6 +275,28 @@ export default {
       }
       const uniModelMat = gl.getUniformLocation(shaderProgram, this.modelMatUniformName);
       gl.uniformMatrix4fv(uniModelMat, false, this.modelMatrix);
+
+      if (!this.usingMaterialIndexInvalid()) {
+        this.materials[this.usingMaterial].material.forEach(m => {
+          const uniName = this.getMaterialProp(m.key).uniform;
+          if (uniName === '') return;
+          const uni = gl.getUniformLocation(shaderProgram, uniName);
+          switch (m.type) {
+            case 'float':
+              gl.uniform1f(uni, m.value); break;
+            case 'vec2':
+              gl.uniform2fv(uni, m.value); break;
+            case 'vec3':
+              gl.uniform3fv(uni, m.value); break;
+            case 'vec4':
+              gl.uniform4fv(uni, m.value); break;
+            case 'mat3':
+              gl.uniformMatrix3fv(uni, m.value); break;
+            case 'mat4':
+              gl.uniformMatrix4fv(uni, m.value); break;
+          }
+        });
+      }
     },
     glDraw(gl) {
       if (this.selectedModel < 0) return;
@@ -249,17 +307,57 @@ export default {
     usingIndexInvalid() {
       return this.usingModel < 0 || this.usingModel >= this.models.length;
     },
+    usingMaterialIndexInvalid() {
+      return this.usingMaterial < 0 || this.usingMaterial >= this.materials.length;
+    },
+    updateUsingMaterial() {
+      if (!this.autoSwitchMaterial) return;
+      if (this.selectedModel < 0 || this.selectedModel >= this.models.length) return;
+      const curModel = this.models[this.selectedModel];
+      const materialIndex = this.materials.reduce((ret, cur, ind) => {
+        if (cur.fileName === curModel.fileName && cur.fileIndex === curModel.fileIndex && cur.index === curModel.material) return ind;
+        return ret;
+      }, undefined);
+      if (materialIndex === undefined) return;
+      this.usingMaterial = materialIndex;
+    },
+    getModelName(index) {
+      if (index < 0 || index >= this.models.length) return '';
+      const m = this.models[index];
+      return `${m.name === undefined ? 'unnamed' : m.name} (${m.fileName}${m.fileIndex > 0 ? `_${m.fileIndex}` : ''})`;
+    },
+    getMaterialName(index) {
+      if (index < 0 || index >= this.materials.length) return '';
+      const m = this.materials[index];
+      return `${m.fileName}${m.fileIndex > 0 ? `_${m.fileIndex}` : ''} [${m.index}]`;
+    },
+    getMaterialProp(key) {
+      if (key === undefined) return undefined;
+      if (this.materialUniforms[key] === undefined) this.materialUniforms[key] = {uniform: ''};
+      return this.materialUniforms[key];
+    },
     loadQuery(query) {
       if (query === undefined) return;
-      if (Array.isArray(query.model)) this.uploadModels(query.model, function (failed) {
-        if (!isInteger(query.selected)) return;
-        let decreaseCount = 0;
-        for (let i = 0; i < failed.length; i++) {
-          if (i < query.selected) decreaseCount++;
-          else if (i === query.selected) return;
-          else break;
+      if (Array.isArray(query.upload)) this.uploadModels(query.upload, function (failed) {
+        if (typeof(query.selected) === 'object' && typeof(query.selected.fileName) === 'string') {
+          const fileIndex = isInteger(query.selected.fileIndex) ? query.selected.fileIndex : 0;
+          const meshName = query.selected.meshName;
+          const selected = this.models.reduce((ret, cur, i) => {
+            if (cur.fileName === query.selected.fileName && cur.fileIndex === fileIndex &&
+                (meshName === undefined || meshName === cur.meshName)) return i;
+            return ret;
+          }, undefined);
+          if (selected !== undefined) this.selectedModel = selected;
         }
-        this.selectedModel = query.selected - decreaseCount;
+        if (typeof(query.materialSelected) === 'object' && typeof(query.materialSelected.fileName) === 'string') {
+          const fileIndex = isInteger(query.materialSelected.fileIndex) ? query.materialSelected.fileIndex : 0;
+          const index = isInteger(query.materialSelected.index) ? query.materialSelected.index : 0;
+          const materialIndex = this.materials.reduce((ret, cur, i) => {
+            if (cur.fileName === query.materialSelected.fileName && cur.fileIndex === fileIndex && cur.index === index) return i;
+            return ret;
+          }, undefined);
+          if (materialIndex !== undefined) this.selectedMaterial = materialIndex;
+        }
       });
       if (typeof(query.attributePosition) === 'string') this.attributeMapping.position = query.attributePosition;
       if (typeof(query.attributeNormal) === 'string') this.attributeMapping.normal = query.attributeNormal;
@@ -283,6 +381,13 @@ export default {
           this.pose.yaw = euler[2];
         }
         this.reCalculateModelMat();
+      }
+      if (Array.isArray(query.materialBind)) {
+        query.materialBind.forEach(m => {
+          if (typeof(m.key) === 'string' && typeof(m.uni) === 'string') {
+            this.materialUniforms[m.key] = { uniform: m.uni };
+          }
+        });
       }
     }
   }
