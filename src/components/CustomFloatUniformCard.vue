@@ -6,9 +6,7 @@
         <div style="display: flex; justify-content: space-between; flex: 1;">
           <el-input v-model="uniformName" class="uniform-name"/>
           <el-button @click="showDeleteDialog = true" class="delete-button" type="danger">
-            <el-icon>
-              <Delete/>
-            </el-icon>
+            <el-icon><Delete/></el-icon>
           </el-button>
         </div>
       </el-form-item>
@@ -36,6 +34,8 @@
 </template>
 
 <script>
+import {Delete} from "@element-plus/icons-vue";
+
 export default {
   name: "CustomFloatUniformCard",
   props: {
@@ -52,6 +52,9 @@ export default {
       value: this.initValue.value || 0.,
       step: this.initValue.step || .1,
     };
+  },
+  components: {
+    Delete
   },
   methods: {
     destroy() {

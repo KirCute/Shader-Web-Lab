@@ -4,7 +4,9 @@
       <el-form-item :label="$t('variable.custom.name')">
         <div style="display: flex; justify-content: space-between; flex: 1;">
           <el-input v-model="uniformName" class="uniform-name"/>
-          <el-button @click="showDeleteDialog = true" class="delete-button" type="danger"> <el-icon><Delete/></el-icon> </el-button>
+          <el-button @click="showDeleteDialog = true" class="delete-button" type="danger">
+            <el-icon><Delete/></el-icon>
+          </el-button>
         </div>
       </el-form-item>
       <el-form-item :label="$t('variable.custom.value')">
@@ -32,6 +34,8 @@
 </template>
 
 <script>
+import {Delete} from "@element-plus/icons-vue";
+
 export default {
   name: "CustomVec2UniformCard",
   props: {
@@ -40,6 +44,9 @@ export default {
     initValue: {type: Object, default: {value: [0., 0.], step: .1}},
     name: {type: String, default: ''},
     expanded: {type: Boolean, default: false}
+  },
+  components: {
+    Delete
   },
   data() {
     return {

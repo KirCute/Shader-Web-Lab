@@ -74,6 +74,7 @@ import {generateIdentityMat4, getType, isInteger, mathjsMatToArray, toRotationMa
 import {Upload} from "@element-plus/icons-vue";
 import * as math from "mathjs";
 import {toEuler} from '../utils'
+import {ElNotification} from "element-plus";
 
 export default {
   name: "ModelAttributeCard",
@@ -155,10 +156,11 @@ export default {
         const reader = new FileReader();
         reader.onload = function (event) {
           const fileContents = new Uint8Array(event.target.result);
-          if (that.addModel(selectedFiles[i].name, fileContents) === 0) {
-            console.log('err');
-            // todo 报告模型加载失败
-          }
+          if (that.addModel(selectedFiles[i].name, fileContents) === 0) ElNotification({
+            title: this.$t('notification.title.error'),
+            message: `${this.$t('notification.message.uploadFailedPrefix')}${selectedFiles[i].name}${this.$t('notification.message.uploadFailedSuffix')}`,
+            type: 'error',
+          });
         };
         reader.readAsArrayBuffer(selectedFiles[i]);
       }
@@ -172,9 +174,12 @@ export default {
         let failed = [];
         for (let i = 0; i < results.length; i++) {
           if (this.addModel(models[i].name, results[i]) === 0) {
-            console.log('err');
             failed = failed.concat(i);
-            // todo 报告模型加载失败
+            ElNotification({
+              title: this.$t('notification.title.error'),
+              message: `${this.$t('notification.message.uploadFailedPrefix')}${models[i].name}${this.$t('notification.message.uploadFailedSuffix')}`,
+              type: 'error',
+            });
           }
         }
         if (callback) callback(failed);

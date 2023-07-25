@@ -165,3 +165,13 @@ export function safeJsonParse(str) {
 export function isInteger(n) {
     return (typeof n === 'number') && ((n | 0) === n);
 }
+
+export function requireResource(url, callback, err = undefined) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url);
+    xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4 && xhr.status === 200) callback(xhr.responseText);
+        else if (err !== undefined) err();
+    };
+    xhr.send();
+}

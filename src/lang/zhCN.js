@@ -113,10 +113,21 @@ export default {
     },
     setting: {
         title: '设置',
-        theme: '主题'
+        theme: '主题',
+        autoSwitchMaterial: '自动切换材质'
     },
     theme: {
         light: '白昼模式',
         dark: '黑夜模式'
+    },
+    notification: {
+        title: {
+            error: '错误'
+        },
+        message: {
+            uniformQueryFailed: '无法识别custom请求字符串。',
+            uploadFailedPrefix: '模型',
+            uploadFailedSuffix: '上传失败。'
+        }
     }
 }

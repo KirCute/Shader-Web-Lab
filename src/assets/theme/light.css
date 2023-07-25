@@ -31,3 +31,7 @@
 .theme-light .swl-add-attribute-button {
     background-color: #409eff;
 }
+
+.theme-light .swl-add-attribute-button svg {
+    color: white;
+}

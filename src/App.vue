@@ -9,9 +9,6 @@
       <el-link class="swl-header-button" v-else @click="theme = 'dark'">
         <el-icon :size="20"><Moon/></el-icon>
       </el-link>
-      <el-link class="swl-header-button">
-        <el-icon :size="20"><Share/></el-icon>
-      </el-link>
       <el-link class="swl-header-button" :href="globalConfig.personalIndex">
         <el-icon :size="20"><Avatar/></el-icon>
       </el-link>
@@ -52,6 +49,9 @@
               <el-select v-model="theme" style="flex: 1;">
                 <el-option v-for="t in getAvailableThemes()" :key="t" :label="$t('theme.' + t)" :value="t"/>
               </el-select>
+            </el-form-item>
+            <el-form-item :label="$t('setting.autoSwitchMaterial')">
+              <el-checkbox v-model="$refs.attributeModel.autoSwitchMaterial"/>
             </el-form-item>
           </el-form>
         </el-drawer>
@@ -119,10 +119,12 @@
       </el-aside>
       <el-aside class="swl-main">
         <el-header class="swl-vert-container">
-          <v-ace-editor v-model:value="vertShader" @change="recompileShader" lang="glsl" theme="github" class="swl-vert"/>
+          <v-ace-editor v-model:value="vertShader" @change="recompileShader" lang="glsl" :theme="getAceTheme(theme)"
+                        class="swl-vert"/>
         </el-header>
         <el-footer class="swl-frag-container">
-          <v-ace-editor v-model:value="fragShader" @change="recompileShader" lang="glsl" theme="github" class="swl-frag"/>
+          <v-ace-editor v-model:value="fragShader" @change="recompileShader" lang="glsl" :theme="getAceTheme(theme)"
+                        class="swl-frag"/>
         </el-footer>
       </el-aside>
     </el-container>
@@ -133,9 +135,10 @@
 import {useI18n} from "vue-i18n";
 import {validLanguages} from "./lang";
 import globalConfig from '../globalConfig.js';
-import {getAvailableThemes} from "./theme";
+import {getAvailableThemes, initAceTheme, getAceTheme} from "./theme";
 
 const {locale} = useI18n();
+initAceTheme();
 
 const changeLang = (val) => {
   locale.value = val;
@@ -148,15 +151,14 @@ import {VAceEditor} from 'vue3-ace-editor';
 import ace from 'ace-builds';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
-import themeGithubUrl from 'ace-builds/src-noconflict/theme-github?url';
 import {Avatar, Bell, InfoFilled, Moon, Plus, Setting, Share, Sunny} from "@element-plus/icons-vue";
-import {attachPrefixToUrl, safeJsonParse} from "./utils";
+import {ElNotification} from 'element-plus';
+import {attachPrefixToUrl, safeJsonParse, requireResource} from "./utils";
 import globalConfig from '../globalConfig.js';
 import {convertToCurrentVersion} from "./query";
 
 ace.config.setModuleUrl('ace/mode/glsl', glslUrl);
 ace.config.setModuleUrl('ace/snippets/glsl', snippetsGlslUrl);
-ace.config.setModuleUrl('ace/theme/github', themeGithubUrl);
 
 const defaultQuery = {
   version: globalConfig.version,
@@ -193,7 +195,7 @@ const defaultQuery = {
     uniModelMat: 'uModelMatrix',
     pose: [0., 0., 0., 0., 0., 0.],
     materialBind: [
-      { key: '$raw.Shininess', uni: 'shininess' }
+      { key: '$raw.Shininess', uni: 'uShininess' }
     ]
   },
   camera: {
@@ -209,11 +211,11 @@ const defaultQuery = {
     farClip: 20.,
   },
   uniforms: [
-    {type: 'vec3', initValue: {value: [0., 8., 0.]}, name: 'lightPosition'},
-    {type: 'vec3', initValue: {value: [.2, .2, .2]}, name: 'ambient'},
-    {type: 'vec3', initValue: {value: [.5, .5, .5]}, name: 'diffuse'},
-    {type: 'vec3', initValue: {value: [.7, .7, .7]}, name: 'specular'},
-    {type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'objectColor'}
+    {type: 'vec3', initValue: {value: [0., 8., 0.]}, name: 'uLightPosition'},
+    {type: 'vec3', initValue: {value: [.2, .2, .2]}, name: 'uAmbient'},
+    {type: 'vec3', initValue: {value: [.5, .5, .5]}, name: 'uDiffuse'},
+    {type: 'vec3', initValue: {value: [.7, .7, .7]}, name: 'uSpecular'},
+    {type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'uObjectColor'}
   ]
 }
 
@@ -238,7 +240,7 @@ export default {
         shaderLinkLog: ""
       },
       usingLanguage: localStorage.getItem('lang') || 'zhCN',
-      theme: 'light'
+      theme: ''
     };
   },
   components: {
@@ -333,31 +335,23 @@ export default {
   },
   created() {
     const urlParams = new URLSearchParams(window.location.search);
+    this.theme = urlParams.get('theme') || 'light';
+    const shaderTemplate = urlParams.get('shaderTemplate') || 'default';
     if (urlParams.has('vertShader')) {
       this.vertShader = urlParams.get('vertShader');
     } else {
-      const vertXhr = new XMLHttpRequest();
-      vertXhr.open('GET', attachPrefixToUrl('/assets/default.vert'));
-      vertXhr.onreadystatechange = () => {
-        if (vertXhr.readyState === 4 && vertXhr.status === 200) {
-          this.vertShader = vertXhr.responseText;
-          this.recompileShader();
-        }
-      };
-      vertXhr.send();
+      requireResource(attachPrefixToUrl(`/assets/shader/${shaderTemplate}.vert`), text => {
+        this.vertShader = text;
+        this.recompileShader();
+      });
     }
     if (urlParams.has('fragShader')) {
       this.fragShader = urlParams.get('fragShader');
     } else {
-      const fragXhr = new XMLHttpRequest();
-      fragXhr.open('GET', attachPrefixToUrl('/assets/default.frag'));
-      fragXhr.onreadystatechange = () => {
-        if (fragXhr.readyState === 4 && fragXhr.status === 200) {
-          this.fragShader = fragXhr.responseText;
-          this.recompileShader();
-        }
-      };
-      fragXhr.send();
+      requireResource(attachPrefixToUrl(`/assets/shader/${shaderTemplate}.frag`), text => {
+        this.fragShader = text;
+        this.recompileShader();
+      });
     }
     this.recompileShader();
   },
@@ -367,18 +361,18 @@ export default {
     const queryParseErr = urlParams.has('custom') && customQuery === undefined;
     customQuery = customQuery || defaultQuery;
 
-    if (queryParseErr) {
-      // TODO summon error dialog
-    }
+    if (queryParseErr) ElNotification({
+      title: this.$t('notification.title.error'),
+      message: this.$t('notification.message.uniformQueryFailed'),
+      type: 'error',
+    });
+    if (customQuery.model === undefined) customQuery.model = {};
+    if (customQuery.model.upload === undefined) customQuery.model.upload = defaultQuery.model.upload;
+    this.$refs.attributeModel.loadQuery(customQuery.model);
+    this.$refs.uniformCamera.loadQuery(customQuery.camera);
     if (Array.isArray(customQuery.uniforms)) {
       customQuery.uniforms.forEach(uniform => this.createNewUniform(uniform.type, uniform.initValue, uniform.name, false));
     }
-    this.$refs.attributeModel.loadQuery(customQuery.model);
-    /*this.$refs.attributeModel.uploadModels([
-      {name: this.$t('variable.model.prefab.cube'), path: attachPrefixToUrl('/assets/models/cube.fbx')},
-      {name: this.$t('variable.model.prefab.sphere'), path: attachPrefixToUrl('/assets/models/sphere.fbx')}
-    ]);*/
-    this.$refs.uniformCamera.loadQuery(customQuery.camera);
     const canvas = this.$refs.canvas;
     this.gl = canvas.getContext('webgl');
     this.$refs.glContext.initializeGL(this.gl);

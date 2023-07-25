@@ -113,10 +113,21 @@ export default {
     },
     setting: {
         title: 'Setting',
-        theme: 'Theme'
+        theme: 'Theme',
+        autoSwitchMaterial: 'Auto-Switch Material'
     },
     theme: {
         light: 'Light',
         dark: 'Dark'
+    },
+    notification: {
+        title: {
+            error: 'Error'
+        },
+        message: {
+            uniformQueryFailed: 'Can\'t parse \'custom\' query string.',
+            uploadFailedPrefix: 'Failed to upload model: ',
+            uploadFailedSuffix: '.'
+        }
     }
 }

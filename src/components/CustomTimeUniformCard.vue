@@ -4,7 +4,9 @@
       <el-form-item :label="$t('variable.temporal.name')">
         <div style="display: flex; justify-content: space-between; flex: 1;">
           <el-input v-model="uniformName" class="uniform-name"/>
-          <el-button @click="showDeleteDialog = true" class="delete-button" type="danger"> <el-icon><Delete/></el-icon> </el-button>
+          <el-button @click="showDeleteDialog = true" class="delete-button" type="danger">
+            <el-icon><Delete/></el-icon>
+          </el-button>
         </div>
       </el-form-item>
       <el-form-item :label="$t('variable.temporal.unit.title')">
@@ -26,7 +28,9 @@
       </el-form-item>
       <el-form-item :label="$t('variable.temporal.offset')">
         <el-input-number v-model="offset" step-strictly class="uniform-name"/>
-        <el-button @click="resetOffset" class="delete-button"> <el-icon><Timer/></el-icon> </el-button>
+        <el-button @click="resetOffset" class="delete-button">
+          <el-icon><Timer/></el-icon>
+        </el-button>
       </el-form-item>
       <el-form-item v-if="modType !== 0" :label="$t('variable.temporal.modulus')">
         <el-input-number v-model="mod" :min="1. / divCoefficient" style="flex: 1;"/>
@@ -49,6 +53,8 @@
 </template>
 
 <script>
+import {Delete, Timer} from "@element-plus/icons-vue";
+
 export default {
   name: "CustomTimeUniformCard",
   props: {
@@ -57,6 +63,9 @@ export default {
     initValue: {type: Object, default: {type: 0, div: 1., offset: 0., modValue: 1.}},
     name: {type: String, default: ''},
     expanded: {type: Boolean, default: false}
+  },
+  components: {
+    Delete, Timer
   },
   data() {
     return {
