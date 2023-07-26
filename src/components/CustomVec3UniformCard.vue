@@ -80,6 +80,9 @@ export default {
     bindUniform(gl, shaderProgram) {
       const uni = gl.getUniformLocation(shaderProgram, this.uniformName);
       gl.uniform3fv(uni, this.value);
+    },
+    genQuery() {
+      return { type: 'vec3', initValue: { value: this.value, step: this.step }, name: this.name };
     }
   }
 }

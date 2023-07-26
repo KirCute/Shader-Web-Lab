@@ -182,12 +182,29 @@ export default {
       if (typeof (query.uniProjectionMat) === 'string') this.projectionMatUniformName = query.uniProjectionMat;
       if (typeof (query.fov) === 'number' && query.number >= 0.01 && query.number <= 3.14) this.projectionFov = query.fov;
       if (typeof (query.ortRecWidth) === 'number' && query.ortRecWidth >= 0.1) this.projectionOrthogonalWidth = query.ortRecWidth;
+      if (typeof (query.clipMax) === 'number') this.clipMax = query.clipMax;
       if (typeof (query.nearClip) === 'number' && typeof(query.farClip) === 'number' && query.nearClip < query.farClip && query.farClip < this.clipMax) {
+        this.clipMax = Math.max(this.clipMax, query.farClip);
         this.projectionClip[0] = query.nearClip;
         this.projectionClip[1] = query.farClip;
       }
       this.reCalculateQuaternion();
       this.reCalculateProjectionMat();
+    },
+    genQuery() {
+      return {
+        type: this.cameraType,
+        uniViewMat: this.viewMatUniformName,
+        position: [this.viewPositionX, this.viewPositionY, this.viewPositionZ],
+        rotation: [this.viewRotationRoll, this.viewRotationPitch, this.viewRotationYaw],
+        depth: this.viewPositionD,
+        uniProjectionMat: this.projectionMatUniformName,
+        fov: this.projectionFov,
+        ortRecWidth: this.projectionOrthogonalWidth,
+        clipMax: this.clipMax,
+        nearClip: this.projectionClip[0],
+        farClip: this.projectionClip[1]
+      };
     }
   }
 }

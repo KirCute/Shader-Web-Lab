@@ -16,16 +16,16 @@
         <el-select v-model="selectedMaterial" :placeholder="$t('variable.model.material.placeholder')" class="show-model" clearable>
           <el-option v-for="i in materials.length" :key="i-1" :value="i-1" :label="getMaterialName(i-1)"/>
         </el-select>
-        <el-button :disabled="usingMaterialIndexInvalid()" @click="showMaterialConfigDialog = true" class="upload-button">
+        <el-button :disabled="usingMaterialIndexInvalid()" @click="materialConfigDialogVisible = true" class="upload-button">
           <el-icon class="el-icon--left"><Setting/></el-icon> {{ $t('variable.model.material.configButton') }}
         </el-button>
-        <el-dialog v-if="!usingMaterialIndexInvalid()" v-model="showMaterialConfigDialog"
+        <el-dialog v-if="!usingMaterialIndexInvalid()" v-model="materialConfigDialogVisible"
                    :title="`${$t('variable.model.material.config.title')}: ${getMaterialName(usingMaterial)}`">
           <el-table :data="materials[usingMaterial].material" style="width: 100%" height="50vh">
             <el-table-column :label="$t('variable.model.material.config.key')" prop="key"/>
             <el-table-column :label="$t('variable.model.material.config.type')" prop="type" width="75"/>
             <el-table-column :label="$t('variable.model.material.config.value')" prop="value"/>
-            <el-table-column :label="$t('variable.model.material.config.uniform')" prop="key">
+            <el-table-column :label="$t('variable.model.material.config.uniform')">
               <template #default="scope">
                 <el-input v-model="getMaterialProp(scope.row.key).uniform" placeholder="uniform"/>
               </template>
@@ -70,7 +70,15 @@
 </template>
 
 <script>
-import {generateIdentityMat4, getType, isInteger, mathjsMatToArray, toRotationMat, toTranslationMat} from '../utils'
+import {
+  attachPrefixToUrl,
+  generateIdentityMat4,
+  getType,
+  isInteger,
+  mathjsMatToArray,
+  toRotationMat,
+  toTranslationMat
+} from '../utils'
 import {Upload} from "@element-plus/icons-vue";
 import * as math from "mathjs";
 import {toEuler} from '../utils'
@@ -107,7 +115,7 @@ export default {
       autoSwitchMaterial: true,
       modelMatrix: generateIdentityMat4(),
       firstRendered: true,
-      showMaterialConfigDialog: false,
+      materialConfigDialogVisible: false,
     };
   },
   computed: {
@@ -342,23 +350,27 @@ export default {
       return this.materialUniforms[key];
     },
     loadQuery(query) {
+      const that = this;
       if (query === undefined) return;
+      query.upload.forEach(m => m.name = decodeURI(m.name));
       if (Array.isArray(query.upload)) this.uploadModels(query.upload, function (failed) {
         if (typeof(query.selected) === 'object' && typeof(query.selected.fileName) === 'string') {
+          const fileName = decodeURI(query.selected.fileName);
           const fileIndex = isInteger(query.selected.fileIndex) ? query.selected.fileIndex : 0;
-          const meshName = query.selected.meshName;
-          const selected = this.models.reduce((ret, cur, i) => {
-            if (cur.fileName === query.selected.fileName && cur.fileIndex === fileIndex &&
-                (meshName === undefined || meshName === cur.meshName)) return i;
+          const meshName = decodeURI(query.selected.meshName || '');
+          const selected = that.models.reduce((ret, cur, i) => {
+            if (cur.fileName === fileName && cur.fileIndex === fileIndex &&
+                (meshName === '' || meshName === cur.meshName)) return i;
             return ret;
           }, undefined);
           if (selected !== undefined) this.selectedModel = selected;
         }
         if (typeof(query.materialSelected) === 'object' && typeof(query.materialSelected.fileName) === 'string') {
+          const fileName = decodeURI(query.materialSelected.fileName);
           const fileIndex = isInteger(query.materialSelected.fileIndex) ? query.materialSelected.fileIndex : 0;
           const index = isInteger(query.materialSelected.index) ? query.materialSelected.index : 0;
-          const materialIndex = this.materials.reduce((ret, cur, i) => {
-            if (cur.fileName === query.materialSelected.fileName && cur.fileIndex === fileIndex && cur.index === index) return i;
+          const materialIndex = that.materials.reduce((ret, cur, i) => {
+            if (cur.fileName === fileName && cur.fileIndex === fileIndex && cur.index === index) return i;
             return ret;
           }, undefined);
           if (materialIndex !== undefined) this.selectedMaterial = materialIndex;
@@ -394,6 +406,21 @@ export default {
           }
         });
       }
+    },
+    genQuery() {
+      const materialBind = [];
+      Object.keys(this.materialUniforms).forEach(key => {
+        materialBind.push({ key: key, uni: this.materialUniforms[key].uniform });
+      });
+      return {
+        attributePosition: this.attributeMapping.position,
+        attributeNormal: this.attributeMapping.normal,
+        attributeTexCoord: this.attributeMapping.texCoord,
+        uniModelMat: this.modelMatUniformName,
+        pose: [this.pose.x, this.pose.y, this.pose.z,
+               this.pose.roll, this.pose.pitch, this.pose.yaw],
+        materialBind: materialBind
+      };
     }
   }
 }

@@ -44,19 +44,19 @@ export default {
   methods: {
     initializeGL(gl) {
       this.gl = gl;
-      this.enabled = [
-        {name: this.$t('variable.context.blend'), symbol: gl.BLEND, value: false},
-        {name: this.$t('variable.context.cull'), symbol: gl.CULL_FACE, value: true},
-        {name: this.$t('variable.context.depthTest'), symbol: gl.DEPTH_TEST, value: true},
-        {name: this.$t('variable.context.dither'), symbol: gl.DITHER, value: false},
-        {name: this.$t('variable.context.polygonOffsetFill'), symbol: gl.POLYGON_OFFSET_FILL, value: false},
-        {name: this.$t('variable.context.sampleAlphaToCoverage'), symbol: gl.SAMPLE_ALPHA_TO_COVERAGE, value: false},
-        {name: this.$t('variable.context.smpCoverage'), symbol: gl.SAMPLE_COVERAGE, value: false},
-        {name: this.$t('variable.context.scissorTest'), symbol: gl.SCISSOR_TEST, value: false},
-        {name: this.$t('variable.context.stencilTest'), symbol: gl.STENCIL_TEST, value: false}
-      ];
       this.gl.enable(this.gl.DEPTH_TEST);
       this.gl.enable(this.gl.CULL_FACE);
+      this.enabled = [
+        {name: this.$t('variable.context.blend'), symbol: gl.BLEND, value: gl.isEnabled(gl.BLEND)},
+        {name: this.$t('variable.context.cull'), symbol: gl.CULL_FACE, value: gl.isEnabled(gl.CULL_FACE)},
+        {name: this.$t('variable.context.depthTest'), symbol: gl.DEPTH_TEST, value: gl.isEnabled(gl.DEPTH_TEST)},
+        {name: this.$t('variable.context.dither'), symbol: gl.DITHER, value: gl.isEnabled(gl.DITHER)},
+        {name: this.$t('variable.context.polygonOffsetFill'), symbol: gl.POLYGON_OFFSET_FILL, value: gl.isEnabled(gl.POLYGON_OFFSET_FILL)},
+        {name: this.$t('variable.context.sampleAlphaToCoverage'), symbol: gl.SAMPLE_ALPHA_TO_COVERAGE, value: gl.isEnabled(gl.SAMPLE_ALPHA_TO_COVERAGE)},
+        {name: this.$t('variable.context.smpCoverage'), symbol: gl.SAMPLE_COVERAGE, value: gl.isEnabled(gl.SAMPLE_COVERAGE)},
+        {name: this.$t('variable.context.scissorTest'), symbol: gl.SCISSOR_TEST, value: gl.isEnabled(gl.SCISSOR_TEST)},
+        {name: this.$t('variable.context.stencilTest'), symbol: gl.STENCIL_TEST, value: gl.isEnabled(gl.STENCIL_TEST)}
+      ];
     },
     onEnabledChange(symbol, value) {
       if (value) this.gl.enable(symbol);
@@ -86,6 +86,20 @@ export default {
       if (typeof (query.smpCoverage) == 'boolean') this.onEnabledChange(this.gl.SAMPLE_COVERAGE, query.smpCoverage);
       if (typeof (query.scissorTest) == 'boolean') this.onEnabledChange(this.gl.SCISSOR_TEST, query.scissorTest);
       if (typeof (query.stencilTest) == 'boolean') this.onEnabledChange(this.gl.STENCIL_TEST, query.stencilTest);
+    },
+    genQuery() {
+      return {
+        backgroundColor: this.backgroundColor,
+        blend: this.gl.isEnabled(this.gl.BLEND),
+        cull: this.gl.isEnabled(this.gl.CULL_FACE),
+        depthTest: this.gl.isEnabled(this.gl.DEPTH_TEST),
+        dither: this.gl.isEnabled(this.gl.DITHER),
+        polygonOffsetFill: this.gl.isEnabled(this.gl.POLYGON_OFFSET_FILL),
+        sampleAlphaToCoverage: this.gl.isEnabled(this.gl.SAMPLE_ALPHA_TO_COVERAGE),
+        smpCoverage: this.gl.isEnabled(this.gl.SAMPLE_COVERAGE),
+        scissorTest: this.gl.isEnabled(this.gl.SCISSOR_TEST),
+        stencilTest: this.gl.isEnabled(this.gl.STENCIL_TEST)
+      };
     }
   }
 }

@@ -75,6 +75,9 @@ export default {
     bindUniform(gl, shaderProgram) {
       const uni = gl.getUniformLocation(shaderProgram, this.uniformName);
       gl.uniformMatrix3fv(uni, true, this.value);
+    },
+    genQuery() {
+      return { type: 'mat3', initValue: { value: this.value, step: this.step }, name: this.name };
     }
   }
 }

@@ -9,6 +9,62 @@
       <el-link class="swl-header-button" v-else @click="theme = 'dark'">
         <el-icon :size="20"><Moon/></el-icon>
       </el-link>
+      <el-link class="swl-header-button" @click="openShareDialog">
+        <el-icon :size="20"><Share/></el-icon>
+        <el-dialog v-model="share.dialogVisible" :title="$t('share.title')" align-center>
+          {{ $t('share.description.1') }} <br><br>
+          {{ $t('share.description.2') }} <br><br>
+          <el-text tag="b" size="large" style="font-weight: bold;">{{ $t('share.uploadTitle') }}</el-text><br>
+          <el-table :data="share.custom.model.upload" style="width: 100%" height="30vh">
+            <el-table-column align="left" width="50">
+              <template #header>
+                <el-link style="background-color: transparent;" @click="addNewShareUpload">
+                  <el-icon><Plus/></el-icon>
+                </el-link>
+              </template>
+              <template #default="scope">
+                <el-link style="background-color: transparent;" @click="removeShareUpload(scope.$index)">
+                  <el-icon><Minus/></el-icon>
+                </el-link>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('share.uploadNameHeader')" width="200">
+              <template #default="scope">
+                <el-input v-model="share.upload[scope.$index].name" @input="genShareLink"/>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('share.uploadUrlHeader')">
+              <template #default="scope">
+                <el-input v-model="share.upload[scope.$index].path" @input="genShareLink"/>
+              </template>
+            </el-table-column>
+          </el-table><br>
+          <el-text tag="b" size="large" style="font-weight: bold;">{{ $t('share.defaultUsingTitle') }}</el-text><br><br>
+          <el-form label-width="70px">
+            <el-form-item :label="$t('share.modelTitle')">
+              <el-input v-model="share.selected.fileName" :placeholder="$t('share.modelFileNamePlaceholder')" @input="genShareLink" class="inline-first"/>
+              <el-input v-model="share.selected.meshName" :placeholder="$t('share.modelMeshNamePlaceholder')" @input="genShareLink" class="inline-last"/>
+            </el-form-item>
+            <el-form-item :label="$t('share.materialTitle')">
+              <el-input v-model="share.materialSelected.fileName" :placeholder="$t('share.materialFileNamePlaceholder')" @input="genShareLink" class="inline-first"/>
+              <el-input-number v-model="share.materialSelected.index" :step="1" step-strictly class="inline-last"
+                               :placeholder="$t('share.materialIndexPlaceholder')" @input="genShareLink" :min="0"/>
+            </el-form-item>
+          </el-form>
+          <el-input v-model="share.urlContent" readonly ref="shareLinkInput">
+            <template #prepend>
+              <el-tooltip effect="dark" placement="bottom" :content="$t('share.selectAllTooltip')">
+                <el-button @click="selectAllShareLink"> <el-icon><Edit/></el-icon> </el-button>
+              </el-tooltip>
+            </template>
+            <template #append>
+              <el-tooltip effect="dark" placement="bottom" :content="$t('share.copyTooltip')">
+                <el-button @click="copyShareLink"> <el-icon><List/></el-icon> </el-button>
+              </el-tooltip>
+            </template>
+          </el-input>
+        </el-dialog>
+      </el-link>
       <el-link class="swl-header-button" :href="globalConfig.personalIndex">
         <el-icon :size="20"><Avatar/></el-icon>
       </el-link>
@@ -39,7 +95,7 @@
           <el-icon size="1.6vw"><Setting/></el-icon>
         </el-link>
         <el-drawer v-model="settingDrawerVisible" :title="$t('setting.title')" direction="ltr">
-          <el-form>
+          <el-form label-width="150px">
             <el-form-item label="Language">
               <el-select v-model="usingLanguage" @change="changeLang" style="flex: 1;">
                 <el-option v-for="lang in validLanguages" :key="lang.symbol" :label="lang.name" :value="lang.symbol"/>
@@ -52,6 +108,9 @@
             </el-form-item>
             <el-form-item :label="$t('setting.autoSwitchMaterial')">
               <el-checkbox v-model="$refs.attributeModel.autoSwitchMaterial"/>
+            </el-form-item>
+            <el-form-item :label="$t('setting.maxDisToFarClip')">
+              <el-input-number v-model="$refs.uniformCamera.clipMax" :step="0.1" :min="0" style="flex: 1;"/>
             </el-form-item>
           </el-form>
         </el-drawer>
@@ -151,9 +210,9 @@ import {VAceEditor} from 'vue3-ace-editor';
 import ace from 'ace-builds';
 import glslUrl from 'ace-builds/src-noconflict/mode-glsl?url';
 import snippetsGlslUrl from 'ace-builds/src-noconflict/snippets/glsl?url';
-import {Avatar, Bell, InfoFilled, Moon, Plus, Setting, Share, Sunny} from "@element-plus/icons-vue";
-import {ElNotification} from 'element-plus';
-import {attachPrefixToUrl, safeJsonParse, requireResource} from "./utils";
+import {Avatar, Bell, InfoFilled, Moon, Plus, Setting, Share, Sunny, List, Edit, Minus} from "@element-plus/icons-vue";
+import {ElNotification, ElMessage} from 'element-plus';
+import {attachPrefixToUrl, safeJsonParseBase64, requireResource} from "./utils";
 import globalConfig from '../globalConfig.js';
 import {convertToCurrentVersion} from "./query";
 
@@ -209,6 +268,7 @@ const defaultQuery = {
     ortRecWidth: 1.6,
     nearClip: 0.1,
     farClip: 20.,
+    clipMax: 20.
   },
   uniforms: [
     {type: 'vec3', initValue: {value: [0., 8., 0.]}, name: 'uLightPosition'},
@@ -225,12 +285,22 @@ export default {
       gl: undefined,
       vertShader: '',
       fragShader: '',
+      firstCompilePassed: false,
       shaderProgram: undefined,
       customUniforms: [],
       nextCustomUniformId: 0,
       addUniformPopoverVisible: false,
       logDrawerVisible: false,
       settingDrawerVisible: false,
+      aboutDialogVisible: false,
+      share: {
+        upload: defaultQuery.model.upload,
+        selected: defaultQuery.model.selected,
+        materialSelected: defaultQuery.model.materialSelected,
+        custom: undefined,
+        urlContent: '',
+        dialogVisible: false,
+      },
       log: {
         vertexCompileError: false,
         vertexCompileLog: "",
@@ -244,19 +314,19 @@ export default {
     };
   },
   components: {
-    Plus, Avatar, InfoFilled, Sunny, Moon, Share, Bell, Setting,
+    Plus, Avatar, InfoFilled, Sunny, Moon, Share, Bell, Setting, List, Edit, Minus,
     VAceEditor,
   },
   methods: {
     redraw() {
+      if (!this.firstCompilePassed) this.firstCompilePassed = this.recompileShader();
+      const canvas = this.$refs.canvas;
+      const parentElement = canvas.parentElement;
+      canvas.width = parentElement.clientWidth;
+      canvas.height = parentElement.clientHeight;
+      const gl = this.gl;
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       try {
-        const canvas = this.$refs.canvas;
-        const parentElement = canvas.parentElement;
-        canvas.width = parentElement.clientWidth;
-        canvas.height = parentElement.clientHeight;
-        const gl = this.gl;
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-
         this.$refs.uniformCamera.bindUniform(gl, this.shaderProgram);
         this.$refs.attributeModel.bindUniform(gl, this.shaderProgram);
         if (Array.isArray(this.$refs.customUniforms)) {
@@ -267,12 +337,12 @@ export default {
         this.$refs.glContext.clearColor(gl);
         this.$refs.attributeModel.glDraw(gl);
       } catch (err) {
-        console.log(err);
+        // todo
       }
       requestAnimationFrame(this.redraw);
     },
     recompileShader() {
-      if (this.gl === undefined) return;
+      if (this.gl === undefined) return false;
       const gl = this.gl;
 
       let vertShader = gl.createShader(gl.VERTEX_SHADER);
@@ -299,7 +369,7 @@ export default {
 
       if (this.log.vertexCompileError || this.log.fragmentCompileError) {
         this.log.shaderLinkLog = this.$t('shaderLog.unlinked');
-        return;
+        return false;
       }
       this.shaderProgram = gl.createProgram();
       gl.attachShader(this.shaderProgram, vertShader);
@@ -308,7 +378,7 @@ export default {
       if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
         this.log.shaderLinkLog = gl.getProgramInfoLog(this.shaderProgram);
         this.log.shaderLinkError = true;
-        return;
+        return false;
       } else {
         this.log.shaderLinkLog = this.$t('shaderLog.linkPass');
         this.log.shaderLinkError = false;
@@ -316,6 +386,7 @@ export default {
 
       gl.useProgram(this.shaderProgram);
       this.$refs.attributeModel.requestRebindVertex();
+      return true;
     },
     createNewUniform(type, initValue = undefined, name = undefined, expanded = true) {
       this.customUniforms.push({
@@ -331,6 +402,70 @@ export default {
       let idx = 0;
       while (idx < this.customUniforms.length && this.customUniforms[idx].id !== id) idx++;
       if (idx < this.customUniforms.length) this.customUniforms.splice(idx, 1);
+    },
+    openShareDialog() {
+      const uniforms = [];
+      this.$refs.customUniforms.forEach(uniform => {
+        uniforms.push(uniform.genQuery());
+      });
+      this.share.custom = {
+        version: globalConfig.version,
+        context: this.$refs.glContext.genQuery(),
+        model: this.$refs.attributeModel.genQuery(),
+        camera: this.$refs.uniformCamera.genQuery(),
+        uniforms: uniforms
+      };
+      if (this.genShareLink()) {
+        this.share.dialogVisible = true;
+      } else {
+        ElMessage.error(this.$t('share.customContainIllegalCharError'));
+      }
+    },
+    genShareLink() {
+      this.share.custom.model.upload = [];
+      this.share.upload.forEach(file => {
+        this.share.custom.model.upload.push({name: encodeURI(file.name), path: encodeURI(file.path)});
+      });
+      this.share.custom.model.selected = {
+        fileName: encodeURI(this.share.selected.fileName),
+        fileIndex: this.share.selected.fileIndex,
+        meshName: encodeURI(this.share.selected.meshName)
+      };
+      this.share.custom.model.materialSelected = {
+        fileName: encodeURI(this.share.materialSelected.fileName),
+        fileIndex: this.share.materialSelected.fileIndex,
+        index: this.share.materialSelected.index || 0
+      };
+      const base = `${globalConfig.rootUrl}${globalConfig.baseUrl}`;
+      let customBase64;
+      try {
+        customBase64 = btoa(JSON.stringify(this.share.custom));
+      } catch (e) {
+        return false;
+      }
+      const custom = encodeURIComponent(customBase64);
+      const vert = encodeURIComponent(this.vertShader);
+      const frag = encodeURIComponent(this.fragShader);
+      this.share.urlContent = `${base}?custom=${custom}&vertShader=${vert}&fragShader=${frag}`;
+      return true;
+    },
+    copyShareLink() {
+      navigator.clipboard.writeText(this.share.urlContent).then(() => {
+        ElMessage.success(this.$t('share.copySuccess'));
+      }).catch(res => {
+        ElMessage.error(this.$t('share.copyError'));
+      });
+    },
+    selectAllShareLink() {
+      this.$refs.shareLinkInput.select();
+    },
+    addNewShareUpload() {
+      this.share.upload.push({name: '', path: ''});
+      this.genShareLink();
+    },
+    removeShareUpload(i) {
+      this.share.upload.splice(i, 1);
+      this.genShareLink();
     }
   },
   created() {
@@ -342,7 +477,6 @@ export default {
     } else {
       requireResource(attachPrefixToUrl(`/assets/shader/${shaderTemplate}.vert`), text => {
         this.vertShader = text;
-        this.recompileShader();
       });
     }
     if (urlParams.has('fragShader')) {
@@ -350,14 +484,12 @@ export default {
     } else {
       requireResource(attachPrefixToUrl(`/assets/shader/${shaderTemplate}.frag`), text => {
         this.fragShader = text;
-        this.recompileShader();
       });
     }
-    this.recompileShader();
   },
   mounted() {
     const urlParams = new URLSearchParams(window.location.search);
-    let customQuery = convertToCurrentVersion(safeJsonParse(urlParams.get('custom')));
+    let customQuery = convertToCurrentVersion(safeJsonParseBase64(urlParams.get('custom')));
     const queryParseErr = urlParams.has('custom') && customQuery === undefined;
     customQuery = customQuery || defaultQuery;
 
@@ -503,5 +635,15 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
+}
+
+.inline-first {
+  flex: 1;
+  margin-right: 5px;
+}
+
+.inline-last {
+  flex: 1;
+  margin-left: 5px;
 }
 </style>

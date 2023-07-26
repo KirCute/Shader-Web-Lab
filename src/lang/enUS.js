@@ -114,7 +114,8 @@ export default {
     setting: {
         title: 'Setting',
         theme: 'Theme',
-        autoSwitchMaterial: 'Auto-Switch Material'
+        autoSwitchMaterial: 'Auto-Switch Material',
+        maxDisToFarClip: 'Max Far Clip'
     },
     theme: {
         light: 'Light',
@@ -129,5 +130,27 @@ export default {
             uploadFailedPrefix: 'Failed to upload model: ',
             uploadFailedSuffix: '.'
         }
+    },
+    share: {
+        title: 'Share',
+        customContainIllegalCharError: 'Error: There are non-latin characters in custom uniforms panel, which is not allowed.',
+        description: {
+            1: 'Share link can share your uniforms and shader code to others. If you hope to use a custom model, you should gain its static url and fill the url in the table below.',
+            2: 'You may upload the model into a GitHub repository and get a static link starting with \'raw.githubusercontent.com\'.',
+        },
+        uploadTitle: 'Upload Custom Models',
+        uploadNameHeader: 'File Name (Avoid duplicate)',
+        uploadUrlHeader: 'Link',
+        defaultUsingTitle: 'Default displaying',
+        modelTitle: 'Model',
+        modelFileNamePlaceholder: 'File Name',
+        modelMeshNamePlaceholder: 'Mesh Name (Default the first in the file)',
+        materialTitle: 'Material',
+        materialFileNamePlaceholder: 'File Name',
+        materialIndexPlaceholder: 'Index (Default 0)',
+        selectAllTooltip: 'Select All',
+        copyTooltip: 'Copy',
+        copySuccess: 'Copy share link successfully',
+        copyError: 'Failed to copy share link'
     }
 }

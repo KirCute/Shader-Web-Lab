@@ -84,6 +84,9 @@ export default {
     bindUniform(gl, shaderProgram) {
       const uni = gl.getUniformLocation(shaderProgram, this.uniformName);
       gl.uniformMatrix4fv(uni, true, this.value);
+    },
+    genQuery() {
+      return { type: 'mat4', initValue: { value: this.value, step: this.step }, name: this.name };
     }
   }
 }

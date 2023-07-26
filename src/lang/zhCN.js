@@ -114,7 +114,8 @@ export default {
     setting: {
         title: '设置',
         theme: '主题',
-        autoSwitchMaterial: '自动切换材质'
+        autoSwitchMaterial: '自动切换材质',
+        maxDisToFarClip: '裁切平面最远距离'
     },
     theme: {
         light: '白昼模式',
@@ -129,5 +130,27 @@ export default {
             uploadFailedPrefix: '模型',
             uploadFailedSuffix: '上传失败。'
         }
+    },
+    share: {
+        title: '分享',
+        customContainIllegalCharError: '错误：自定义变量界面存在非拉丁字符（可能位于变量名中），这是非法的。',
+        description: {
+            1: '共享链接可以将您当前的变量配置和着色器代码直接共享给他人，如果您想在共享链接中使用自己的模型文件，您需要得到该模型文件的一个静态链接，并将其填写在下面的表格中。',
+            2: '您可以考虑将模型文件上传到一个GitHub仓库中，从而获得一个以raw.githubusercontent.com开头的静态链接。'
+        },
+        uploadTitle: '上传模型',
+        uploadNameHeader: '文件名（请勿重名）',
+        uploadUrlHeader: '链接',
+        defaultUsingTitle: '默认使用模型与材质',
+        modelTitle: '模型',
+        modelFileNamePlaceholder: '模型所处文件名',
+        modelMeshNamePlaceholder: '模型名称（可留空，将使用文件内第一个模型）',
+        materialTitle: '材质',
+        materialFileNamePlaceholder: '材质所处文件名',
+        materialIndexPlaceholder: '材质索引（默认为0）',
+        selectAllTooltip: '全选',
+        copyTooltip: '复制到剪切板',
+        copySuccess: '复制成功',
+        copyError: '复制失败，请手动复制'
     }
 }

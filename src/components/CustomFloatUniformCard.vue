@@ -65,6 +65,9 @@ export default {
       const uni = gl.getUniformLocation(shaderProgram, this.uniformName);
       gl.uniform1f(uni, this.value);
     }
+  },
+  genQuery() {
+    return { type: 'float', initValue: { value: this.value, step: this.step }, name: this.name };
   }
 }
 </script>

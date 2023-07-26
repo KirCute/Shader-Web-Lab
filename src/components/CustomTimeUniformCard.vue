@@ -113,6 +113,13 @@ export default {
     },
     limitMod() {
       this.mod = Math.max(this.mod, 1. / this.divCoefficient);
+    },
+    genQuery() {
+      return {
+        type: 'time',
+        initValue: { type: this.modType, div: this.divCoefficient, offset: this.offset, modValue: this.mod },
+        name: this.name
+      };
     }
   }
 }

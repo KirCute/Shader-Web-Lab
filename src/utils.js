@@ -162,6 +162,15 @@ export function safeJsonParse(str) {
     }
 }
 
+export function safeJsonParseBase64(str) {
+    if (str === undefined || str === null) return undefined;
+    try {
+        return JSON.parse(atob(str));
+    } catch (e) {
+        return undefined;
+    }
+}
+
 export function isInteger(n) {
     return (typeof n === 'number') && ((n | 0) === n);
 }
