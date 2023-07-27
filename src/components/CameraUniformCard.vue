@@ -1,5 +1,5 @@
 <template>
-  <card-header :title="$t('variable.camera.title') + ': ' + getTypeName(this.cameraType)">
+  <card-header :title="$t('variable.camera.title') + ': ' + getTypeName(this.cameraType)" :badge="hasError()">
     <el-form label-width="100px" size="small">
       <el-form-item :label="$t('variable.camera.type.title')">
         <el-select v-model="cameraType" style="flex: 1;" @change="reCalculateViewMat">
@@ -11,7 +11,13 @@
       <el-divider/>
 
       <el-form-item :label="$t('variable.camera.uViewMat')">
-        <el-input v-model="viewMatUniformName"/>
+        <el-input v-model="viewMatUniformName">
+          <template #append v-if="errors.viewMat">
+            <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+              <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+            </el-tooltip>
+          </template>
+        </el-input>
       </el-form-item>
       <div v-if="cameraType === 2">
         <el-form-item :label="$t('variable.camera.staring.position')">
@@ -49,7 +55,13 @@
       <el-divider/>
 
       <el-form-item :label="$t('variable.camera.uProjectionMat')">
-        <el-input v-model="projectionMatUniformName"/>
+        <el-input v-model="projectionMatUniformName">
+          <template #append v-if="errors.projMat">
+            <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+              <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+            </el-tooltip>
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item :label="$t('variable.camera.clip')">
         <el-slider v-model="projectionClip" :min="0.01" :max="clipMax" :step="0.01" show-input range
@@ -74,9 +86,11 @@
 <script>
 import * as math from 'mathjs';
 import {toTranslationMat, toRotationMat, mathjsMatToArray, toQuaternion, toEuler, isInteger} from '../utils';
+import {WarnTriangleFilled} from "@element-plus/icons-vue";
 
 export default {
   name: "CameraUniform",
+  components: {WarnTriangleFilled},
   data() {
     return {
       viewMatUniformName: 'uViewMatrix',
@@ -100,17 +114,19 @@ export default {
       clipMax: 20.0,
       viewMatrix: [1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.],
       projectionMatrix: [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., -1., 0., 0., 0., 0.],
+      errors: {
+        viewMat: false,
+        projMat: false
+      }
     };
   },
   methods: {
     getTypeName(type) {
       switch (type) {
-        case 0:
-          return this.$t('variable.camera.type.orthogonal');
-        case 1:
-          return this.$t('variable.camera.type.perspective');
-        case 2:
-          return this.$t('variable.camera.type.perspectiveStaring');
+        case 0: return this.$t('variable.camera.type.orthogonal');
+        case 1: return this.$t('variable.camera.type.perspective');
+        case 2: return this.$t('variable.camera.type.perspectiveStaring');
+        default: return '';
       }
     },
     reCalculateViewMat() {
@@ -154,9 +170,11 @@ export default {
     },
     bindUniform(gl, shaderProgram) {
       const uniViewMat = gl.getUniformLocation(shaderProgram, this.viewMatUniformName);
-      const uniProjectionMat = gl.getUniformLocation(shaderProgram, this.projectionMatUniformName);
       gl.uniformMatrix4fv(uniViewMat, false, this.viewMatrix);
+      this.errors.viewMat = uniViewMat === null;
+      const uniProjectionMat = gl.getUniformLocation(shaderProgram, this.projectionMatUniformName);
       gl.uniformMatrix4fv(uniProjectionMat, false, this.projectionMatrix);
+      this.errors.projMat = uniProjectionMat === null;
     },
     loadQuery(query) {
       if (isInteger(query.type) && query.type >= 0 && query.type < 3) this.cameraType = query.type;
@@ -205,6 +223,9 @@ export default {
         nearClip: this.projectionClip[0],
         farClip: this.projectionClip[1]
       };
+    },
+    hasError() {
+      return this.errors.viewMat || this.errors.projMat;
     }
   }
 }

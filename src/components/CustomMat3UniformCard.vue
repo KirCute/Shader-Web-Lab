@@ -1,9 +1,16 @@
 <template>
-  <card-header :init-expanded="expanded" :title="$t('variable.custom.prefix') + 'mat3' + $t('variable.custom.suffix') + (uniformName.length === 0 ? '' : ': '+ uniformName)">
+  <card-header :init-expanded="expanded" :badge="error"
+               :title="$t('variable.custom.prefix') + 'mat3' + $t('variable.custom.suffix') + (uniformName.length === 0 ? '' : ': '+ uniformName)">
     <el-form label-width="100px" size="small">
       <el-form-item :label="$t('variable.custom.name')">
         <div style="display: flex; justify-content: space-between; flex: 1;">
-          <el-input v-model="uniformName" class="uniform-name"/>
+          <el-input v-model="uniformName" class="uniform-name">
+            <template #append v-if="error">
+              <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+                <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+              </el-tooltip>
+            </template>
+          </el-input>
           <el-button @click="showDeleteDialog = true" class="delete-button" type="danger">
             <el-icon><Delete/></el-icon>
           </el-button>
@@ -45,7 +52,7 @@
 </template>
 
 <script>
-import {Delete} from "@element-plus/icons-vue";
+import {Delete, WarnTriangleFilled} from "@element-plus/icons-vue";
 
 export default {
   name: "CustomMat3UniformCard",
@@ -57,7 +64,7 @@ export default {
     expanded: {type: Boolean, default: false}
   },
   components: {
-    Delete
+    Delete, WarnTriangleFilled
   },
   data() {
     return {
@@ -65,6 +72,7 @@ export default {
       uniformName: this.name.length === 0 ? 'uUnnamed' + this.id : this.name,
       value: (this.initValue.value || [1., 0., 0., 0., 1., 0., 0., 0., 1.]).concat(),
       step: this.initValue.step || .1,
+      error: false
     };
   },
   methods: {
@@ -75,6 +83,7 @@ export default {
     bindUniform(gl, shaderProgram) {
       const uni = gl.getUniformLocation(shaderProgram, this.uniformName);
       gl.uniformMatrix3fv(uni, true, this.value);
+      this.error = uni === null;
     },
     genQuery() {
       return { type: 'mat3', initValue: { value: this.value, step: this.step }, name: this.name };

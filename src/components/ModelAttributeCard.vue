@@ -1,5 +1,6 @@
 <template>
-  <card-header :title="$t('variable.model.title') + (usingIndexInvalid() ? '' : (': ' + models[usingModel].name))">
+  <card-header :title="$t('variable.model.title') + (usingIndexInvalid() ? '' : (': ' + models[usingModel].name))"
+               :badge="hasError()">
     <el-form label-width="100px" size="small">
       <el-form-item :label="$t('variable.model.displaying')">
         <el-select v-if="selectedModel < 0" disabled :placeholder="$t('variable.model.loading')" class="show-model"/>
@@ -37,20 +38,43 @@
 
       <el-form-item :label="$t('variable.model.aPosition')">
         <el-input v-if="usingIndexInvalid()" disabled :placeholder="$t('variable.model.aPositionInvalid')"/>
-        <el-input v-else v-model="attributeMapping.position" @change="requestRebindVertex"/>
+        <el-input v-else v-model="attributeMapping.position" @change="requestRebindVertex">
+          <template #append v-if="error.position">
+            <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+              <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+            </el-tooltip>
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item :label="$t('variable.model.aNormal')">
         <el-input v-if="usingIndexInvalid() || !models[usingModel].model.hasVertexNormal" disabled :placeholder="$t('variable.model.aNormalInvalid')"/>
-        <el-input v-else v-model="attributeMapping.normal" @change="requestRebindVertex"/>
+        <el-input v-else v-model="attributeMapping.normal" @change="requestRebindVertex">
+          <template #append v-if="error.normal">
+            <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+              <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+            </el-tooltip>
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item :label="$t('variable.model.aTexCoord')">
         <el-input v-if="usingIndexInvalid() || !models[usingModel].model.hasTextureCoordinate" disabled :placeholder="$t('variable.model.aTexCoordInvalid')"/>
-        <el-input v-else v-model="attributeMapping.texCoord" @change="requestRebindVertex"/>
+        <el-input v-else v-model="attributeMapping.texCoord" @change="requestRebindVertex">
+          <template #append v-if="error.texCoord">
+            <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+              <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+            </el-tooltip>
+          </template>
+        </el-input>
       </el-form-item>
       <el-divider/>
 
       <el-form-item :label="$t('variable.model.uModelMat')">
-        <el-input v-model="modelMatUniformName"/>
+        <el-input v-model="modelMatUniformName">
+          <template #append v-if="error.modelMat">
+            <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+              <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+            </el-tooltip>
+          </template></el-input>
       </el-form-item>
       <el-form-item :label="$t('variable.model.position')">
         <el-input-number class="inline-first" v-model="pose.x" :step="0.1" @change="reCalculateModelMat"/>
@@ -71,7 +95,6 @@
 
 <script>
 import {
-  attachPrefixToUrl,
   generateIdentityMat4,
   getType,
   isInteger,
@@ -79,7 +102,7 @@ import {
   toRotationMat,
   toTranslationMat
 } from '../utils'
-import {Upload} from "@element-plus/icons-vue";
+import {Upload, WarnTriangleFilled} from "@element-plus/icons-vue";
 import * as math from "mathjs";
 import {toEuler} from '../utils'
 import {ElNotification} from "element-plus";
@@ -87,7 +110,7 @@ import {ElNotification} from "element-plus";
 export default {
   name: "ModelAttributeCard",
   components: {
-    Upload
+    Upload, WarnTriangleFilled
   },
   data() {
     return {
@@ -116,6 +139,12 @@ export default {
       modelMatrix: generateIdentityMat4(),
       firstRendered: true,
       materialConfigDialogVisible: false,
+      error: {
+        position: false,
+        normal: false,
+        texCoord: false,
+        modelMat: false
+      }
     };
   },
   computed: {
@@ -146,15 +175,18 @@ export default {
       let attrPosition = gl.getAttribLocation(shaderProgram, this.attributeMapping.position);
       gl.vertexAttribPointer(attrPosition, 3, gl.FLOAT, false, vertexSize, positionOffset);
       gl.enableVertexAttribArray(attrPosition);
+      this.error.position = attrPosition === -1;
       if (this.models[index].model.hasVertexNormal) {
         let attrNormal = gl.getAttribLocation(shaderProgram, this.attributeMapping.normal);
         gl.vertexAttribPointer(attrNormal, 3, gl.FLOAT, false, vertexSize, normalOffset);
         gl.enableVertexAttribArray(attrNormal);
+        this.error.normal = attrNormal === -1;
       }
       if (this.models[index].model.hasTextureCoordinate) {
         let attrTexCoord = gl.getAttribLocation(shaderProgram, this.attributeMapping.texCoord);
         gl.vertexAttribPointer(attrTexCoord, 2, gl.FLOAT, false, vertexSize, texOffset);
         gl.enableVertexAttribArray(attrTexCoord);
+        this.error.texCoord = attrTexCoord === -1;
       }
     },
     clickUploadFiles() {
@@ -288,6 +320,7 @@ export default {
       }
       const uniModelMat = gl.getUniformLocation(shaderProgram, this.modelMatUniformName);
       gl.uniformMatrix4fv(uniModelMat, false, this.modelMatrix);
+      this.error.modelMat = uniModelMat === null;
 
       if (!this.usingMaterialIndexInvalid()) {
         this.materials[this.usingMaterial].material.forEach(m => {
@@ -421,6 +454,9 @@ export default {
                this.pose.roll, this.pose.pitch, this.pose.yaw],
         materialBind: materialBind
       };
+    },
+    hasError() {
+      return this.error.modelMat || this.error.position || this.error.normal || this.error.texCoord;
     }
   }
 }

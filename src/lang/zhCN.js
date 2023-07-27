@@ -1,5 +1,8 @@
 export default {
     variable: {
+        error: {
+            varUndefined: '警告：未在着色器程序中声明'
+        },
         header: {
             unfold: '展开',
             fold: '收起'

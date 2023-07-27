@@ -1,5 +1,8 @@
 export default {
     variable: {
+        error: {
+            varUndefined: 'Warning: undefined in the shader'
+        },
         header: {
             unfold: 'Unfold',
             fold: 'Fold'

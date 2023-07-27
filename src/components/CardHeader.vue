@@ -10,9 +10,11 @@
     </template>
     <div v-if="!expanded" class="card-header">
       <span class="swl-attribute-title">{{ title }}</span>
-      <el-link class="swl-expand-button ban-select" :underline="false" @click="expanded = !expanded">
-        {{ $t('variable.header.unfold') }}
-      </el-link>
+      <el-badge is-dot :hidden="!badge">
+        <el-link class="swl-expand-button ban-select" :underline="false" @click="expanded = !expanded">
+          {{ $t('variable.header.unfold') }}
+        </el-link>
+      </el-badge>
     </div>
     <slot v-if="expanded"/>
   </el-card>
@@ -23,7 +25,8 @@ export default {
   name: "CardHeader",
   props: {
     title: {type: String},
-    initExpanded: {type: Boolean, default: false}
+    initExpanded: {type: Boolean, default: false},
+    badge: {type: Boolean, default: false}
   },
   data() {
     return {

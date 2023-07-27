@@ -65,6 +65,15 @@
           </el-input>
         </el-dialog>
       </el-link>
+      <el-link class="swl-header-button" :href="globalConfig.githubUrl">
+        <el-icon :size="20">
+          <svg style="background: transparent;" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path fill="dark-gray" id="github-repo-link-right"
+                  d="M 8 3.86 C 8.7 3.86 9.38 3.95 10 4.13 C 11.55 3.09 12.22 3.31 12.22 3.31 C 12.66 4.41 12.38 5.23 12.3 5.43 C 12.81 6 13.12 6.7 13.12 7.58 C 13.12 10.65 11.25 11.33 9.47 11.53 C 9.76 11.78 10 12.26 10 13 C 10 14.08 10 14.94 10 15.21 C 10 15.42 10.15 15.67 10.55 15.59 C 13.806 14.491 16 11.437 16 8 C 16 3.58 12.42 0 8 0 Z"/>
+            <use href="#github-repo-link-right" x="-16.3" style="transform: scaleX(-1);"/>
+          </svg>
+        </el-icon>
+      </el-link>
       <el-link class="swl-header-button" :href="globalConfig.personalIndex">
         <el-icon :size="20"><Avatar/></el-icon>
       </el-link>
@@ -253,9 +262,7 @@ const defaultQuery = {
     attributeTexCoord: 'aTexCoord',
     uniModelMat: 'uModelMatrix',
     pose: [0., 0., 0., 0., 0., 0.],
-    materialBind: [
-      { key: '$raw.Shininess', uni: 'uShininess' }
-    ]
+    materialBind: []
   },
   camera: {
     type: 2,
@@ -275,7 +282,8 @@ const defaultQuery = {
     {type: 'vec3', initValue: {value: [.2, .2, .2]}, name: 'uAmbient'},
     {type: 'vec3', initValue: {value: [.5, .5, .5]}, name: 'uDiffuse'},
     {type: 'vec3', initValue: {value: [.7, .7, .7]}, name: 'uSpecular'},
-    {type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'uObjectColor'}
+    {type: 'vec3', initValue: {value: [1., .5, .5]}, name: 'uObjectColor'},
+    {type: 'float', initValue: {value: 25}, name: 'uShininess'},
   ]
 }
 
@@ -337,7 +345,6 @@ export default {
         this.$refs.glContext.clearColor(gl);
         this.$refs.attributeModel.glDraw(gl);
       } catch (err) {
-        // todo
       }
       requestAnimationFrame(this.redraw);
     },
@@ -406,6 +413,7 @@ export default {
     openShareDialog() {
       const uniforms = [];
       this.$refs.customUniforms.forEach(uniform => {
+        console.log(uniform);
         uniforms.push(uniform.genQuery());
       });
       this.share.custom = {

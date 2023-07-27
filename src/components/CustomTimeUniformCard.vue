@@ -1,9 +1,16 @@
 <template>
-  <card-header :init-expanded="expanded" :title="$t('variable.temporal.title') + (uniformName.length === 0 ? '' : ': '+ uniformName)">
+  <card-header :init-expanded="expanded" :badge="error"
+               :title="$t('variable.temporal.title') + (uniformName.length === 0 ? '' : ': '+ uniformName)">
     <el-form label-width="100px" size="small">
       <el-form-item :label="$t('variable.temporal.name')">
         <div style="display: flex; justify-content: space-between; flex: 1;">
-          <el-input v-model="uniformName" class="uniform-name"/>
+          <el-input v-model="uniformName" class="uniform-name">
+            <template #append v-if="error">
+              <el-tooltip placement="top" effect="dark" :content="$t('variable.error.varUndefined')">
+                <el-icon color="orange"><WarnTriangleFilled/></el-icon>
+              </el-tooltip>
+            </template>
+          </el-input>
           <el-button @click="showDeleteDialog = true" class="delete-button" type="danger">
             <el-icon><Delete/></el-icon>
           </el-button>
@@ -53,7 +60,7 @@
 </template>
 
 <script>
-import {Delete, Timer} from "@element-plus/icons-vue";
+import {Delete, Timer, WarnTriangleFilled} from "@element-plus/icons-vue";
 
 export default {
   name: "CustomTimeUniformCard",
@@ -65,7 +72,7 @@ export default {
     expanded: {type: Boolean, default: false}
   },
   components: {
-    Delete, Timer
+    Delete, Timer, WarnTriangleFilled
   },
   data() {
     return {
@@ -75,6 +82,7 @@ export default {
       divCoefficient: this.initValue.div || 1.,
       offset: this.initValue.offset || 0.,
       mod: this.initValue.modValue || 1.,
+      error: false
     };
   },
   methods: {
@@ -107,6 +115,7 @@ export default {
           break;
       }
       gl.uniform1f(uni, value);
+      this.error = uni === null;
     },
     resetOffset() {
       this.offset = -Date.now();
