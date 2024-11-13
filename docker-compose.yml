@@ -1,7 +1,0 @@
-version: '3'
-services:
-  shader-web-lab:
-    build: .
-    working_dir: /data
-    ports:
-      - "8080:8080"
